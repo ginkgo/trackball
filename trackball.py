@@ -32,8 +32,8 @@ loc2 = Rotation(0,-45,-90) * Location((0,0,-ball/2 - 3*wall_thickness))
 board1 = loc1 * board
 board2 = loc2 * board
 
-pizero = Rotation(90,90,0) * Location((-10.5,0,25.5)) * import_step("Pico-R3.step")
-pizero = Locations((0,-40, -35)) * pizero
+pipico = Rotation(90,90,0) * Location((-10.5,0,25.5)) * import_step("Pico-R3.step")
+pipico = Locations((0,-40, -35)) * pipico
 
 
 def mk_button_sketch():
@@ -51,46 +51,49 @@ def mk_button_sketch():
     return face
 button_sketch = mk_button_sketch()
 
-# with BuildPart() as button_mask:
-#     add(button_sketch)
-#     ex
 button_mask = extrude(button_sketch, amount=-60)
-    
-with BuildPart() as top:
-    with Locations(arc_location):
-        Cylinder(arc_radius, base_width, rotation=(0,90,0))
-    # add(make_arc_shell(0, arc_radius))
-    
-    with Locations((0,30,0)):
-        Box(base_width, base_width+60, ball+15, mode=Mode.INTERSECT)
-    Sphere(radius=(ball+bearing)/2, mode=Mode.SUBTRACT)
-    Cylinder(8,100,mode=Mode.SUBTRACT)
 
-    with Locations([Rotation(0,0,angle) * Rotation(70,0,0) * Location((0,0,-ball/2-bearing/2))  for angle in range(60,360+60,120)]):
-        Cylinder(bearing/2, bearing, mode=Mode.SUBTRACT)
+def mk_top():
+    part = Part()
+    part += make_arc_shell(0,arc_radius)
+    part &= Location((0,30,0)) * Box(base_width, base_width+60, ball+15)
+    part -= Sphere(radius=(ball+bearing)/2)
+    part -= Cylinder(8,100)
     
-    base_plate = top.faces().sort_by(Axis.Z)[0]
-    offset(top.solids()[0], amount=-wall_thickness, openings=base_plate)
+    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Location((0,0,-ball/2-bearing/2))  for angle in range(60,360+60,120))
+    part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
 
-        
-    top_edges = top.faces().sort_by(Axis.Z)[-1:].edges().sort_by(Axis.Y)[:-1]
-    back_edges = top.faces().sort_by(Axis.Y)[:1].edges().sort_by(Axis.Z)[1:]
-    
-    fillet(top_edges + back_edges, radius=wall_thickness)
+    base_plate = part.faces().sort_by(Axis.Z)[0]
+    part = offset(part.solids()[0], amount=-wall_thickness, openings=base_plate)
 
-    with PolarLocations(radius=0, count=4):
-        add(button_mask, mode=Mode.SUBTRACT)
-        
-    with Locations([loc1, loc2]):
-        Cylinder(2, 20, mode=Mode.SUBTRACT)
+    fillet_edges = [
+        part.edges().sort_by(Axis.Z)[-1],
+        part.edges().sort_by(Axis.X)[-3:].sort_by(Axis.Z)[-1],
+        part.edges().sort_by(Axis.X)[:3].sort_by(Axis.Z)[-1],
+        part.edges().sort_by(Axis.Y)[:4].sort_by(Axis.Z)[-1],
+        part.edges().sort_by_distance(Vertex(-1,0,-ball/2))[0],
+    ]
+    part = fillet(fillet_edges, wall_thickness )   
 
-    with Locations((0,0,-32)):
-        Cone(bottom_radius=0, top_radius=12, height=12, mode=Mode.SUBTRACT)
+    rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
+    part -= [r * button_mask for r in rots]
+
+    part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
+    return part
+top = mk_top()
     
 result = {
     'ball': trackball,
     'top': top,
     'board1': board1,
     'board2': board2,
-    'pizero': pizero,
+    'pipico': pipico,
 }
+
+if __name__ == "__main__":
+
+    exporter = Mesher()
+    for k,v in result.items():
+        print(k)
+        exporter.add_shape(v)
+    exporter.write(f'mesh.stl')
