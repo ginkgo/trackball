@@ -40,13 +40,13 @@ def mk_button_sketch():
     inner = ball/2
     outer = ball/2 + 25
 
-    sketch = CenterArc(center=(0,0), radius=inner, start_angle=0, arc_size=90)
-    sketch += Polyline([(0,inner), (0,outer), (inner,outer)])
+    line = CenterArc(center=(0,0), radius=inner, start_angle=0, arc_size=90)
+    line += Polyline([line @ 1, (0,outer), (inner,outer)])
     #sketch += Line((inner,outer), (outer,inner))
-    sketch += RadiusArc((inner,outer,0), (outer,inner,0), radius=outer-inner)
-    sketch += Polyline([(outer,inner), (outer,0), (inner,0),])
+    line += RadiusArc(line @ 1, (outer,inner), radius=outer-inner)
+    line += Polyline([line @ 1, (outer,0), (inner,0)])
 
-    face = make_face(sketch)
+    face = make_face(line)
     face = offset(face, amount=-3)
     return face
 button_sketch = mk_button_sketch()
@@ -92,8 +92,8 @@ result = {
 
 if __name__ == "__main__":
 
-    exporter = Mesher()
     for k,v in result.items():
         print(k)
+        exporter = Mesher()
         exporter.add_shape(v)
-    exporter.write(f'mesh.stl')
+        exporter.write(f'{k}.stl')
