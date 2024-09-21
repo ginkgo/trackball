@@ -9,13 +9,13 @@ base_width=110
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
-def make_arc_shell(r1, r2):
+def mk_arc_shell(r1, r2):
     loc = Location(arc_location)
 
     v = Cylinder(r2, base_width, rotation=(0,90,0))
 
     if r1 > 0:
-        v = v - Cylinder(r2, base_width+10, rotation=(0,90,0))
+        v = v - Cylinder(r1, base_width+10, rotation=(0,90,0))
     return loc * v
 
 trackball=Sphere(radius=ball/2)
@@ -55,7 +55,7 @@ button_mask = extrude(button_sketch, amount=-60)
 
 def mk_top():
     part = Part()
-    part += make_arc_shell(0,arc_radius)
+    part += mk_arc_shell(0,arc_radius)
     part &= Location((0,30,0)) * Box(base_width, base_width+60, ball+15)
     part -= Sphere(radius=(ball+bearing)/2)
     part -= Cylinder(8,100)
@@ -71,9 +71,11 @@ def mk_top():
         part.edges().sort_by(Axis.X)[-3:].sort_by(Axis.Z)[-1],
         part.edges().sort_by(Axis.X)[:3].sort_by(Axis.Z)[-1],
         part.edges().sort_by(Axis.Y)[:4].sort_by(Axis.Z)[-1],
+        part.edges().sort_by(Axis.Y)[:4].sort_by(Axis.X)[0],
+        part.edges().sort_by(Axis.Y)[:4].sort_by(Axis.X)[-1],
         part.edges().sort_by_distance(Vertex(-1,0,-ball/2))[0],
     ]
-    part = fillet(fillet_edges, wall_thickness )   
+    part = chamfer(fillet_edges, wall_thickness )   
 
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
@@ -81,14 +83,40 @@ def mk_top():
     part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
     return part
 top = mk_top()
+
+def mk_button(angle):
+    rot = Rotation(0,0,angle)
     
+    part = mk_arc_shell(arc_radius - wall_thickness,
+                        arc_radius + wall_thickness/2)
+    part &= Location((0,0,10)) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+
+    # part = bounding_box(part)
+    # part &= mk_arc_shell(0,arc_radius+wall_thickness/2)
+    # part &= Location((0,0,10)) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+        
+    edges = part.edges()
+    part = chamfer(edges, 0.5)
+
+    rod_width = 5
+    rod = Rotation(0,0,45+angle) * Location((ball/2+rod_width/2+4,0,0)) * Box(rod_width, rod_width, 200)
+    rod &= mk_arc_shell(0, arc_radius)
+    rod &= Box(300,300,50)
+    part += rod
+    
+    return part
+buttons = [mk_button(a) for a in range(0,360,90)]
+
 result = {
     'ball': trackball,
     'top': top,
-    'board1': board1,
-    'board2': board2,
-    'pipico': pipico,
+   'board1': board1,
+   'board2': board2,
+   'pipico': pipico,
 }
+
+for i,b in enumerate(buttons):
+    result[f'button{i}'] = b
 
 if __name__ == "__main__":
 
