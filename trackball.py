@@ -1,6 +1,7 @@
 from build123d import *
 
 ball = 57.2
+#ball = 52.4
 bearing = 2.5
 wall_thickness = 2
 
@@ -33,7 +34,7 @@ board1 = loc1 * board
 board2 = loc2 * board
 
 pipico = Rotation(90,90,0) * Pos(-10.5,0,25.5) * import_step("Pico-R3.step")
-pipico = Locations((0,-40, -35)) * pipico
+pipico = Locations((0,-40, -30)) * pipico
 
 
 def mk_button_sketch():
@@ -124,13 +125,32 @@ def mk_button(angle):
     part = chamfer(edges, 0.5)
 
     rod_width = 5
-    rod = Rotation(0,0,45+angle) * Pos(ball/2+rod_width/2+4,0,0) * Box(rod_width, rod_width, 200)
+    rod = Rotation(0,0,45+angle) * Pos(ball/2+rod_width/2+5,0,0) * Box(rod_width, rod_width, 200)
     rod &= mk_arc_shell(0, arc_radius)
-    rod &= Box(300,300,50)
+    rod &= Box(300,300,40)
     part += rod
 
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]
+
+def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
+    alignment = [Align.CENTER, Align.CENTER, Align.MIN]
+    part = Box(8,30,1.4, align=alignment)
+    part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=alignment)
+    part += Pos(0,0,1.4+6.5) * Box(2.9,1.2,1, align=alignment)
+
+    part -= Pos(0,-12,0) * Cylinder(1,3)
+    part -= Pos(0,+12,0) * Cylinder(1,3)
+
+    top_loc = part.faces().sort_by(Axis.Z)[-1].center()
+    
+    return pos * Pos(-top_loc) * rot * part
+
+button_pcbs = []
+for i,b in enumerate(buttons):
+    p = b.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0].center()
+    rot = Rotation(0,0,90) if (i in [1,2]) else Rotation(0,0,-90)
+    button_pcbs.append(mk_button_pcb(pos=Pos(p), rot=rot))
 
 result = {
     'ball': trackball,
@@ -138,12 +158,15 @@ result = {
     'bottom': bottom,
     'board1': board1,
     'board2': board2,
-#   'pipico': pipico,
+    #'pipico': pipico,
 }
 
 for i,b in enumerate(buttons):
     result[f'button{i}'] = b
 
+for i,b in enumerate(button_pcbs):
+    result[f'button_pcb{i}'] = b
+    
 if __name__ == "__main__":
 
     for k,v in result.items():
