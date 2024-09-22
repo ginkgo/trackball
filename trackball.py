@@ -81,6 +81,12 @@ def mk_top():
     part -= [r * button_mask for r in rots]
 
     part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
+
+    text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
+    text = Rotation(0,0,180) * Location((-base_width/2+5,-74,0)) * text
+    # f = text.faces()[0]
+    part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
+    
     return part
 top = mk_top()
 
@@ -103,16 +109,16 @@ def mk_button(angle):
     rod &= mk_arc_shell(0, arc_radius)
     rod &= Box(300,300,50)
     part += rod
-    
+
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]
 
 result = {
     'ball': trackball,
     'top': top,
-   'board1': board1,
-   'board2': board2,
-   'pipico': pipico,
+#    'board1': board1,
+#    'board2': board2,
+#   'pipico': pipico,
 }
 
 for i,b in enumerate(buttons):
