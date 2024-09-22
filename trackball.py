@@ -6,6 +6,7 @@ bearing = 2.5
 wall_thickness = 2
 
 base_width=110
+base_height=(ball+10)/2
 
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
@@ -57,7 +58,7 @@ button_mask = extrude(button_sketch, amount=-60)
 def mk_top():
     part = Part()
     part += mk_arc_shell(0,arc_radius)
-    part &= Pos(0,30,0) * Box(base_width, base_width+60, ball+10)
+    part &= Pos(0,30,0) * Box(base_width, base_width+60, base_height*2)
     part -= Sphere(radius=(ball+bearing)/2)
     part -= Cylinder(8,100)
     
@@ -134,6 +135,8 @@ def mk_button(angle):
 buttons = [mk_button(a) for a in range(0,360,90)]
 
 def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
+    global bottom
+    
     alignment = [Align.CENTER, Align.CENTER, Align.MIN]
     part = Box(8,30,1.4, align=alignment)
     part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=alignment)
@@ -141,10 +144,16 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
 
     part -= Pos(0,-12,0) * Cylinder(1,3)
     part -= Pos(0,+12,0) * Cylinder(1,3)
-
+    
     top_loc = part.faces().sort_by(Axis.Z)[-1].center()
     
-    return pos * Pos(-top_loc) * rot * part
+    loc = pos * Pos(-top_loc) * rot
+    bottom += (loc * Pos(0,-12,-0.1) * Cylinder(3, 30, align=[Align.CENTER, Align.CENTER, Align.MAX])) & bounding_box(top)
+    bottom -= (loc * Pos(0,-12,-0.1) * Cylinder(0.9, 3.1, align=[Align.CENTER, Align.CENTER, Align.MAX]))
+    bottom += (loc * Pos(0,+12,-0.1) * Cylinder(3, 30, align=[Align.CENTER, Align.CENTER, Align.MAX])) & bounding_box(top)
+    bottom -= (loc * Pos(0,+12,-0.1) * Cylinder(0.9, 3.1, align=[Align.CENTER, Align.CENTER, Align.MAX]))
+    
+    return loc * part
 
 button_pcbs = []
 for i,b in enumerate(buttons):
