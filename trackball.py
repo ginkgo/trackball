@@ -20,19 +20,19 @@ def mk_arc_shell(r1, r2):
 
 trackball=Sphere(radius=ball/2)
 
-board = Location((2.91,0,0)) * Box(34,22,1.5) - Box(18,9,5)
+board = Pos(2.91,0,0) * Box(34,22,1.5) - Box(18,9,5)
 for l in [(-11.09,-8),
           (-11.09,8),
           (+13.41,-8),
           (+13.41,8)]:
     board -= Location(l) * Cylinder(1.6, 10)
 
-loc1 = Rotation(0, 45,-90) * Location((0,0,-ball/2 - 3*wall_thickness))
-loc2 = Rotation(0,-45,-90) * Location((0,0,-ball/2 - 3*wall_thickness))
+loc1 = Rotation(0, 45,-90) * Pos(0,0,-ball/2 - 3*wall_thickness)
+loc2 = Rotation(0,-45,-90) * Pos(0,0,-ball/2 - 3*wall_thickness)
 board1 = loc1 * board
 board2 = loc2 * board
 
-pipico = Rotation(90,90,0) * Location((-10.5,0,25.5)) * import_step("Pico-R3.step")
+pipico = Rotation(90,90,0) * Pos(-10.5,0,25.5) * import_step("Pico-R3.step")
 pipico = Locations((0,-40, -35)) * pipico
 
 
@@ -48,19 +48,19 @@ def mk_button_sketch():
 
     face = make_face(line)
     face = offset(face, amount=-3)
+    
     return face
 button_sketch = mk_button_sketch()
-
 button_mask = extrude(button_sketch, amount=-60)
 
 def mk_top():
     part = Part()
     part += mk_arc_shell(0,arc_radius)
-    part &= Location((0,30,0)) * Box(base_width, base_width+60, ball+15)
+    part &= Pos(0,30,0) * Box(base_width, base_width+60, ball+10)
     part -= Sphere(radius=(ball+bearing)/2)
     part -= Cylinder(8,100)
     
-    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Location((0,0,-ball/2-bearing/2))  for angle in range(60,360+60,120))
+    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-ball/2-bearing/2)  for angle in range(60,360+60,120))
     part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
 
     base_plate = part.faces().sort_by(Axis.Z)[0]
@@ -82,30 +82,49 @@ def mk_top():
 
     part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
 
-    text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
-    text = Rotation(0,0,180) * Location((-base_width/2+5,-74,0)) * text
-    # f = text.faces()[0]
-    part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
+    # text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
+    # text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
+    # # f = text.faces()[0]
+    # part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
     
     return part
 top = mk_top()
+
+def mk_bottom():
+    part = Part()
+
+    bottom_face = top.faces().filter_by(Axis.Z)[0]
+    hole_face = top.faces().filter_by(Axis.Z)[1]
+    
+    outer = Face(bottom_face.outer_wire(), hole_face.inner_wires())
+    inner = make_face(bottom_face.inner_wires()[0])
+
+    #hole_face = offset(hole_face, 0.5)
+
+    #outer = outer.faces()[0].make_holes([hole_face.outer_wire()])
+    
+    part += extrude(outer, wall_thickness, dir=(0,0,-1))
+    #part += extrude(inner, wall_thickness, dir=(0,0,1)) - top
+    
+    return part
+bottom = Pos(0,0,0.3) * mk_bottom()
 
 def mk_button(angle):
     rot = Rotation(0,0,angle)
     
     part = mk_arc_shell(arc_radius - wall_thickness,
                         arc_radius + wall_thickness/2)
-    part &= Location((0,0,10)) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+    part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
 
     # part = bounding_box(part)
     # part &= mk_arc_shell(0,arc_radius+wall_thickness/2)
-    # part &= Location((0,0,10)) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+    # part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
         
     edges = part.edges()
     part = chamfer(edges, 0.5)
 
     rod_width = 5
-    rod = Rotation(0,0,45+angle) * Location((ball/2+rod_width/2+4,0,0)) * Box(rod_width, rod_width, 200)
+    rod = Rotation(0,0,45+angle) * Pos(ball/2+rod_width/2+4,0,0) * Box(rod_width, rod_width, 200)
     rod &= mk_arc_shell(0, arc_radius)
     rod &= Box(300,300,50)
     part += rod
@@ -116,8 +135,9 @@ buttons = [mk_button(a) for a in range(0,360,90)]
 result = {
     'ball': trackball,
     'top': top,
-#    'board1': board1,
-#    'board2': board2,
+    'bottom': bottom,
+    'board1': board1,
+    'board2': board2,
 #   'pipico': pipico,
 }
 
