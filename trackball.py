@@ -42,17 +42,6 @@ loc2 = Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall_thickness)
 board1 = loc1 * board
 board2 = loc2 * board
 
-def mk_pipico(pos):
-    part = Box(51,21,1, align=align('ctr','ctr','min'))
-    part += Pos(51/2 + 1.3, 0, 1) * Box(5,8,2, align=align('max','ctr','min'))
-
-    hole_positions = [Pos(x,y,0) for x in [-23.5, 23.5] for y in [-5.7, 5.7]]
-    part -= [p * Cylinder(2.1/2, 4) for p in hole_positions]
-    
-    return pos * part
-
-pipico = mk_pipico(Pos(0,50, -30))
-
 
 def mk_button_sketch():
     inner = ball/2
@@ -126,6 +115,23 @@ def mk_bottom():
     
     return part
 bottom = Pos(0,0,0) * mk_bottom()
+
+def mk_pipico(pos):
+    global top
+    global bottom
+    
+    part = Box(51,21,1, align=align('ctr','ctr','min'))
+    part += Pos(51/2 + 1.3, 0, 1) * Box(5,8,2, align=align('max','ctr','min'))
+
+    hole_positions = [Pos(x,y,0) for x in [-23.5, 23.5] for y in [-5.7, 5.7]]
+    part -= [p * Cylinder(2.1/2, 4) for p in hole_positions]
+
+    bbox = bounding_box(top)
+    bottom += [bbox & pos * p * Cylinder(2,10, align=align('ctr','ctr','max')) for p in hole_positions]
+    bottom -= [pos * p * Cylinder(0.9,3, align=align('ctr','ctr','max')) for p in hole_positions]
+    
+    return pos * part
+pipico = mk_pipico(Pos(0,50, -30))
 
 def mk_button(angle):
     rot = Rotation(0,0,angle)

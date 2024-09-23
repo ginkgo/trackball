@@ -1,5 +1,5 @@
-mount points for pipico
 mount points for laser pcb
+double-check dimensions of breakout board
 fine-adjustment of laser focal distance
 setting laser holes up to spec
 USB cable hole
