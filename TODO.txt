@@ -1,9 +1,8 @@
 mount points for laser pcb
 double-check dimensions of breakout board
 fine-adjustment of laser focal distance
-setting laser holes up to spec
-USB cable hole
+set laser holes up to sensor spec
 double-check drill hole sizes (experiment)
 double-check ball bearing hole sizes
-Design button hinge assembly
-	   experiment!
+Design button hinge assembly (experiment)
+bottom/top screwholes

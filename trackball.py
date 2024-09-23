@@ -89,6 +89,7 @@ def mk_top():
 
     part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
 
+    
     # text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
     # text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
     # # f = text.faces()[0]
@@ -98,6 +99,7 @@ def mk_top():
 top = mk_top()
 
 def mk_bottom():
+    global top
     part = Part()
 
     bottom_face = top.faces().filter_by(Axis.Z)[0]
@@ -112,9 +114,43 @@ def mk_bottom():
     
     part += extrude(outer, wall_thickness, dir=(0,0,-1))
     #part += extrude(inner, wall_thickness, dir=(0,0,1)) - top
+
+    # Add front notch in top
+    front_edge = top.edges().sort_by(Axis.Y)[-1]
+    front_pos = front_edge.center()
+    top += (Pos(front_pos) * Box(front_edge.length, 5, 20, align=align('ctr','max','min'))) & mk_arc_shell(0,arc_radius - wall_thickness/2)
     
+    # Add front notch in bottom
+    notch_loc = Pos(0,-5 - 0.5,0) * Pos(front_edge.center())
+    notch_width = base_width - wall_thickness * 2.5
+    part += notch_loc * Box(notch_width, wall_thickness, 5, align=align('ctr','max','min')) & mk_arc_shell(0, arc_radius - wall_thickness - 0.5)
+
+    # Add back notch in bottom
+    bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
+    bottom_pos = bottom_edge.center()
+    part += Pos(0,wall_thickness+0.5,0) * Pos(bottom_pos) * Box(notch_width,
+                                                                wall_thickness,
+                                                                wall_thickness,
+                                                                align=align('ctr','min','min'))
+    
+    # Cut hole for USB cable in top
+    hole_radius=3
+    hole_sketch = [
+        Polyline([(hole_radius,0,hole_radius),
+                  (hole_radius,0,0),
+                  (-hole_radius,0,0),
+                  (-hole_radius,0,hole_radius)]),
+        ThreePointArc([(-hole_radius,0,hole_radius),
+                       (0,0,hole_radius*2),
+                       (hole_radius,0,hole_radius)])
+    ]
+                                 
+    top -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=3, dir=(0,1,0))
+    part -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=10, dir=(0,1,0))
+                                 
+        
     return part
-bottom = Pos(0,0,0) * mk_bottom()
+bottom = mk_bottom()
 
 def mk_pipico(pos):
     global top
