@@ -1,7 +1,9 @@
 from build123d import *
 
-ball = 57.2
-#ball = 52.4
+ball = 57.2    # pool billiards ball
+#ball = 52.4   # snooker ball
+#ball = 55     # Kensington ball
+
 bearing = 2.5
 wall_thickness = 2
 
@@ -10,6 +12,12 @@ base_height=(ball+10)/2
 
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
+
+def align(x,y,z):
+    d = {'ctr': Align.CENTER,
+         'min': Align.MIN,
+         'max': Align.MAX}
+    return [d[c] for c in [x,y,z]]
 
 def mk_arc_shell(r1, r2):
     loc = Location(arc_location)
@@ -29,13 +37,21 @@ for l in [(-11.09,-8),
           (+13.41,8)]:
     board -= Location(l) * Cylinder(1.6, 10)
 
-loc1 = Rotation(0, 45,-90) * Pos(0,0,-ball/2 - 3*wall_thickness)
-loc2 = Rotation(0,-45,-90) * Pos(0,0,-ball/2 - 3*wall_thickness)
+loc1 = Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall_thickness)
+loc2 = Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall_thickness)
 board1 = loc1 * board
 board2 = loc2 * board
 
-pipico = Rotation(90,90,0) * Pos(-10.5,0,25.5) * import_step("Pico-R3.step")
-pipico = Locations((0,-40, -30)) * pipico
+def mk_pipico(pos):
+    part = Box(51,21,1, align=align('ctr','ctr','min'))
+    part += Pos(51/2 + 1.3, 0, 1) * Box(5,8,2, align=align('max','ctr','min'))
+
+    hole_positions = [Pos(x,y,0) for x in [-23.5, 23.5] for y in [-5.7, 5.7]]
+    part -= [p * Cylinder(2.1/2, 4) for p in hole_positions]
+    
+    return pos * part
+
+pipico = mk_pipico(Pos(0,50, -30))
 
 
 def mk_button_sketch():
@@ -109,7 +125,7 @@ def mk_bottom():
     #part += extrude(inner, wall_thickness, dir=(0,0,1)) - top
     
     return part
-bottom = Pos(0,0,0.3) * mk_bottom()
+bottom = Pos(0,0,0) * mk_bottom()
 
 def mk_button(angle):
     rot = Rotation(0,0,angle)
@@ -137,7 +153,7 @@ buttons = [mk_button(a) for a in range(0,360,90)]
 def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     global bottom
     
-    alignment = [Align.CENTER, Align.CENTER, Align.MIN]
+    alignment = align('ctr','ctr','min')
     part = Box(8,30,1.4, align=alignment)
     part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=alignment)
     part += Pos(0,0,1.4+6.5) * Box(2.9,1.2,1, align=alignment)
@@ -148,17 +164,17 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     top_loc = part.faces().sort_by(Axis.Z)[-1].center()
     
     loc = pos * Pos(-top_loc) * rot
-    bottom += (loc * Pos(0,-12,-0.1) * Cylinder(3, 30, align=[Align.CENTER, Align.CENTER, Align.MAX])) & bounding_box(top)
-    bottom -= (loc * Pos(0,-12,-0.1) * Cylinder(0.9, 3.1, align=[Align.CENTER, Align.CENTER, Align.MAX]))
-    bottom += (loc * Pos(0,+12,-0.1) * Cylinder(3, 30, align=[Align.CENTER, Align.CENTER, Align.MAX])) & bounding_box(top)
-    bottom -= (loc * Pos(0,+12,-0.1) * Cylinder(0.9, 3.1, align=[Align.CENTER, Align.CENTER, Align.MAX]))
+    for p in [Pos(0,-12,-0.1),
+              Pos(0,+12,-0.1)]:
+        bottom += (loc * p * Cylinder(3, 30, align=align('ctr','ctr','max'))) & bounding_box(top)
+        bottom -= (loc * p * Cylinder(0.9, 3.1, align=align('ctr','ctr','max')))
     
     return loc * part
 
 button_pcbs = []
 for i,b in enumerate(buttons):
     p = b.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0].center()
-    rot = Rotation(0,0,90) if (i in [1,2]) else Rotation(0,0,-90)
+    rot = Rotation(0,0,90) if (i not in [1,2]) else Rotation(0,0,-90)
     button_pcbs.append(mk_button_pcb(pos=Pos(p), rot=rot))
 
 result = {
@@ -167,7 +183,7 @@ result = {
     'bottom': bottom,
     'board1': board1,
     'board2': board2,
-    #'pipico': pipico,
+    'pipico': pipico,
 }
 
 for i,b in enumerate(buttons):
