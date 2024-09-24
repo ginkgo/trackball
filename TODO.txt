@@ -1,8 +1,9 @@
-mount points for laser pcb
+Design button hinge assembly (experiment)
 double-check dimensions of breakout board
 fine-adjustment of laser focal distance
 set laser holes up to sensor spec
 double-check drill hole sizes (experiment)
 double-check ball bearing hole sizes
-Design button hinge assembly (experiment)
 bottom/top screwholes
+magnetic cover
+magnetically attached wrist wrest

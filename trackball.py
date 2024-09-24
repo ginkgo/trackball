@@ -13,11 +13,11 @@ base_height=(ball+10)/2
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
-def align(x,y,z):
-    d = {'ctr': Align.CENTER,
-         'min': Align.MIN,
-         'max': Align.MAX}
-    return [d[c] for c in [x,y,z]]
+def align(xyz):
+    d = {'c': Align.CENTER,
+         '-': Align.MIN,
+         '+': Align.MAX}
+    return [d[c] for c in xyz]
 
 def mk_arc_shell(r1, r2):
     loc = Location(arc_location)
@@ -29,19 +29,6 @@ def mk_arc_shell(r1, r2):
     return loc * v
 
 trackball=Sphere(radius=ball/2)
-
-board = Pos(2.91,0,0) * Box(34,22,1.5) - Box(18,9,5)
-for l in [(-11.09,-8),
-          (-11.09,8),
-          (+13.41,-8),
-          (+13.41,8)]:
-    board -= Location(l) * Cylinder(1.6, 10)
-
-loc1 = Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall_thickness)
-loc2 = Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall_thickness)
-board1 = loc1 * board
-board2 = loc2 * board
-
 
 def mk_button_sketch():
     inner = ball/2
@@ -86,9 +73,6 @@ def mk_top():
 
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
-
-    part -= [l * Cylinder(2,20) for l in [loc1, loc2]]
-
     
     # text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
     # text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
@@ -118,12 +102,12 @@ def mk_bottom():
     # Add front notch in top
     front_edge = top.edges().sort_by(Axis.Y)[-1]
     front_pos = front_edge.center()
-    top += (Pos(front_pos) * Box(front_edge.length, 5, 20, align=align('ctr','max','min'))) & mk_arc_shell(0,arc_radius - wall_thickness/2)
+    top += (Pos(front_pos) * Box(front_edge.length, 5, 20, align=align('c+-'))) & mk_arc_shell(0,arc_radius - wall_thickness/2)
     
     # Add front notch in bottom
     notch_loc = Pos(0,-5 - 0.5,0) * Pos(front_edge.center())
     notch_width = base_width - wall_thickness * 2.5
-    part += notch_loc * Box(notch_width, wall_thickness, 5, align=align('ctr','max','min')) & mk_arc_shell(0, arc_radius - wall_thickness - 0.5)
+    part += notch_loc * Box(notch_width, wall_thickness, 5, align=align('c+-')) & mk_arc_shell(0, arc_radius - wall_thickness - 0.5)
 
     # Add back notch in bottom
     bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
@@ -131,7 +115,7 @@ def mk_bottom():
     part += Pos(0,wall_thickness+0.5,0) * Pos(bottom_pos) * Box(notch_width,
                                                                 wall_thickness,
                                                                 wall_thickness,
-                                                                align=align('ctr','min','min'))
+                                                                align=align('c--'))
     
     # Cut hole for USB cable in top
     hole_radius=3
@@ -152,22 +136,52 @@ def mk_bottom():
     return part
 bottom = mk_bottom()
 
+
+def mk_sensor_pcb(loc):
+    global bottom, top
+    board = Pos(2.91,0,0) * Box(34,22,1.55, align=align('cc-')) - Box(18,9,5, align=align('cc-'))
+
+    hole_locations = [Pos(x,y) for x in (-11.09, +13.41) for y in (-8, +8)]
+    board -= [l * Cylinder(.8, 10) for l in hole_locations]
+
+
+    strut=4
+    sketch = Polyline([(-2,0,strut-5),
+                       (+2,0,strut-5),
+                       (+2,0,-5),
+                       (-2,0,-5),
+                       (-2,0,strut-5)])
+    bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
+    
+    sketch = Pos(0,0,-5) * Circle(radius=2)
+    bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
+    
+    bottom += [loc * l * Cylinder(2.1,5, align=align('cc+')) for l in hole_locations]
+    bottom -= [loc * l * Cylinder(0.9,2, align=align('cc+')) for l in hole_locations]
+             
+    top -= loc * Cylinder(2,20) 
+            
+    return loc * board
+        
+sensor_pcb1 = mk_sensor_pcb(Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall_thickness))
+sensor_pcb2 = mk_sensor_pcb(Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall_thickness))
+
 def mk_pipico(pos):
     global top
     global bottom
     
-    part = Box(51,21,1, align=align('ctr','ctr','min'))
-    part += Pos(51/2 + 1.3, 0, 1) * Box(5,8,2, align=align('max','ctr','min'))
+    part = Box(51,21,1, align=align('cc-'))
+    part += Pos(51/2 + 1.3, 0, 1) * Box(5,8,2, align=align('+c-'))
 
     hole_positions = [Pos(x,y,0) for x in [-23.5, 23.5] for y in [-5.7, 5.7]]
     part -= [p * Cylinder(2.1/2, 4) for p in hole_positions]
 
     bbox = bounding_box(top)
-    bottom += [bbox & pos * p * Cylinder(2,10, align=align('ctr','ctr','max')) for p in hole_positions]
-    bottom -= [pos * p * Cylinder(0.9,3, align=align('ctr','ctr','max')) for p in hole_positions]
+    bottom += [bbox & pos * p * Cylinder(2,10, align=align('cc+')) for p in hole_positions]
+    bottom -= [pos * p * Cylinder(0.9,3, align=align('cc+')) for p in hole_positions]
     
     return pos * part
-pipico = mk_pipico(Pos(0,50, -30))
+pipico = mk_pipico(Pos(0,45, -30))
 
 def mk_button(angle):
     rot = Rotation(0,0,angle)
@@ -195,10 +209,9 @@ buttons = [mk_button(a) for a in range(0,360,90)]
 def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     global bottom
     
-    alignment = align('ctr','ctr','min')
-    part = Box(8,30,1.4, align=alignment)
-    part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=alignment)
-    part += Pos(0,0,1.4+6.5) * Box(2.9,1.2,1, align=alignment)
+    part = Box(8,30,1.4, align=align('cc-'))
+    part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=align('cc-'))
+    part += Pos(0,0,1.4+6.5) * Box(2.9,1.2,1, align=align('cc-'))
 
     part -= Pos(0,-12,0) * Cylinder(1,3)
     part -= Pos(0,+12,0) * Cylinder(1,3)
@@ -208,8 +221,8 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     loc = pos * Pos(-top_loc) * rot
     for p in [Pos(0,-12,-0.1),
               Pos(0,+12,-0.1)]:
-        bottom += (loc * p * Cylinder(3, 30, align=align('ctr','ctr','max'))) & bounding_box(top)
-        bottom -= (loc * p * Cylinder(0.9, 3.1, align=align('ctr','ctr','max')))
+        bottom += (loc * p * Cylinder(3, 30, align=align('cc+'))) & bounding_box(top)
+        bottom -= (loc * p * Cylinder(0.9, 3.1, align=align('cc+')))
     
     return loc * part
 
@@ -223,8 +236,8 @@ result = {
     'ball': trackball,
     'top': top,
     'bottom': bottom,
-    'board1': board1,
-    'board2': board2,
+    'sensor_pcb1': sensor_pcb1,
+    'sensor_pcb2': sensor_pcb2,
     'pipico': pipico,
 }
 
