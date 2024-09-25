@@ -1,4 +1,5 @@
 Design button hinge assembly (experiment)
+Button notch to keep it from sticking out
 double-check dimensions of breakout board
 fine-adjustment of laser focal distance
 set laser holes up to sensor spec

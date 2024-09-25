@@ -197,12 +197,18 @@ def mk_button(angle):
     edges = part.edges()
     part = chamfer(edges, 0.5)
 
+    rod_loc = Rotation(0,0,angle-45) * Pos(0,ball/2+5,0)
     rod_width = 5
-    rod = Rotation(0,0,45+angle) * Pos(ball/2+rod_width/2+5,0,0) * Box(rod_width, rod_width, 200)
+    
+    rod = rod_loc * Box(rod_width, rod_width, 100, align=align('c-+'))
     rod &= mk_arc_shell(0, arc_radius)
     rod &= Box(300,300,40)
     part += rod
 
+    strip_width = 8
+    part += (rod_loc * Box(strip_width, 15, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4, arc_radius)
+    part += (rod_loc * Box(strip_width, 32, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4-2, arc_radius-4)
+    
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]
 
@@ -217,7 +223,7 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     part -= Pos(0,+12,0) * Cylinder(1,3)
     
     top_loc = part.faces().sort_by(Axis.Z)[-1].center()
-    
+
     loc = pos * Pos(-top_loc) * rot
     for p in [Pos(0,-12,-0.1),
               Pos(0,+12,-0.1)]:
@@ -228,7 +234,7 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
 
 button_pcbs = []
 for i,b in enumerate(buttons):
-    p = b.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0].center()
+    p = b.faces().filter_by(Axis.Z).sort_by_distance((0,0,0))[0].center()
     rot = Rotation(0,0,90) if (i not in [1,2]) else Rotation(0,0,-90)
     button_pcbs.append(mk_button_pcb(pos=Pos(p), rot=rot))
 
