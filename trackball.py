@@ -5,7 +5,7 @@ ball = 57.2    # pool billiards ball
 #ball = 55     # Kensington ball
 
 bearing = 2.5
-wall_thickness = 2
+wall = 2
 
 base_width=110
 base_height=(ball+10)/2
@@ -58,7 +58,7 @@ def mk_top():
     part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
 
     base_plate = part.faces().sort_by(Axis.Z)[0]
-    part = offset(part.solids()[0], amount=-wall_thickness, openings=base_plate)
+    part = offset(part.solids()[0], amount=-wall, openings=base_plate)
 
     fillet_edges = [
         part.edges().sort_by(Axis.Z)[-1],
@@ -69,7 +69,7 @@ def mk_top():
         part.edges().sort_by(Axis.Y)[:4].sort_by(Axis.X)[-1],
         part.edges().sort_by_distance(Vertex(-1,0,-ball/2))[0],
     ]
-    part = chamfer(fillet_edges, wall_thickness )   
+    part = chamfer(fillet_edges, wall )   
 
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
@@ -96,25 +96,25 @@ def mk_bottom():
 
     #outer = outer.faces()[0].make_holes([hole_face.outer_wire()])
     
-    part += extrude(outer, wall_thickness, dir=(0,0,-1))
-    #part += extrude(inner, wall_thickness, dir=(0,0,1)) - top
+    part += extrude(outer, wall, dir=(0,0,-1))
+    #part += extrude(inner, wall, dir=(0,0,1)) - top
 
     # Add front notch in top
     front_edge = top.edges().sort_by(Axis.Y)[-1]
     front_pos = front_edge.center()
-    top += (Pos(front_pos) * Box(front_edge.length, 5, 20, align=align('c+-'))) & mk_arc_shell(0,arc_radius - wall_thickness/2)
+    top += (Pos(front_pos) * Box(front_edge.length, 5, 20, align=align('c+-'))) & mk_arc_shell(0,arc_radius - wall/2)
     
     # Add front notch in bottom
     notch_loc = Pos(0,-5 - 0.5,0) * Pos(front_edge.center())
-    notch_width = base_width - wall_thickness * 2.5
-    part += notch_loc * Box(notch_width, wall_thickness, 5, align=align('c+-')) & mk_arc_shell(0, arc_radius - wall_thickness - 0.5)
+    notch_width = base_width - wall * 2.5
+    part += notch_loc * Box(notch_width, wall, 5, align=align('c+-')) & mk_arc_shell(0, arc_radius - wall - 0.5)
 
     # Add back notch in bottom
     bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = bottom_edge.center()
-    part += Pos(0,wall_thickness+0.5,0) * Pos(bottom_pos) * Box(notch_width,
-                                                                wall_thickness,
-                                                                wall_thickness,
+    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(notch_width,
+                                                                wall,
+                                                                wall,
                                                                 align=align('c--'))
     
     # Cut hole for USB cable in top
@@ -163,8 +163,8 @@ def mk_sensor_pcb(loc):
             
     return loc * board
         
-sensor_pcb1 = mk_sensor_pcb(Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall_thickness))
-sensor_pcb2 = mk_sensor_pcb(Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall_thickness))
+sensor_pcb1 = mk_sensor_pcb(Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall))
+sensor_pcb2 = mk_sensor_pcb(Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall))
 
 def mk_pipico(pos):
     global top
@@ -186,12 +186,12 @@ pipico = mk_pipico(Pos(0,45, -30))
 def mk_button(angle):
     rot = Rotation(0,0,angle)
     
-    part = mk_arc_shell(arc_radius - wall_thickness,
-                        arc_radius + wall_thickness/2)
+    part = mk_arc_shell(arc_radius - wall,
+                        arc_radius + wall/2)
     part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
 
     # part = bounding_box(part)
-    # part &= mk_arc_shell(0,arc_radius+wall_thickness/2)
+    # part &= mk_arc_shell(0,arc_radius+wall/2)
     # part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
         
     edges = part.edges()
