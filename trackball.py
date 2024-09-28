@@ -47,12 +47,14 @@ def mk_button_sketch():
 button_sketch = mk_button_sketch()
 button_mask = extrude(button_sketch, amount=-60)
 
+bottom_hole_radius = 8
+
 def mk_top():
     part = Part()
     part += mk_arc_shell(0,arc_radius)
     part &= Pos(0,30,0) * Box(base_width, base_width+60, base_height*2)
     part -= Sphere(radius=(ball+bearing)/2)
-    part -= Cylinder(8,100)
+    part -= Cylinder(bottom_hole_radius,100)
     
     locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-ball/2-bearing/2)  for angle in range(60,360+60,120))
     part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
@@ -116,6 +118,17 @@ def mk_bottom():
                                                                 wall,
                                                                 wall,
                                                                 align=align('c--'))
+
+    # Add ring-shaped notch around cup hole on bottom
+    ring_pos = Pos(hole_face.center())
+    ring_height = wall
+    ring =  Cylinder(bottom_hole_radius + 2*wall,       ring_height, align=align('cc-'))
+    ring -= Cylinder(bottom_hole_radius + 1*wall + 0.1, ring_height, align=align('cc-'))
+    ring -= Box(wall+0.2,30,wall, align=align('c--'))
+    part += ring_pos * ring
+
+    top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall,wall*2,wall, align=align('c--'))
+
     
     # Cut hole for USB cable in top
     hole_radius=3
@@ -208,6 +221,7 @@ def mk_button(angle):
     strip_width = 8
     part += (rod_loc * Box(strip_width, 15, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4, arc_radius)
     part += (rod_loc * Box(strip_width, 32, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4-2, arc_radius-4)
+
     
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]
