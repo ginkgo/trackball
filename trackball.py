@@ -114,10 +114,7 @@ def mk_bottom():
     # Add back notch in bottom
     bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = bottom_edge.center()
-    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(base_width*0.66,
-                                                      wall,
-                                                      wall,
-                                                      align=align('c--'))
+    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(base_width*0.66, wall, wall, align=align('c--'))
 
     # Add ring-shaped notch around cup hole on bottom
     ring_pos = Pos(hole_face.center())
@@ -198,6 +195,7 @@ def mk_pipico(pos):
 pipico = mk_pipico(Pos(0,45, -30))
 
 def mk_button(angle):
+    global bottom
     rot = Rotation(0,0,angle)
 
     part = mk_arc_shell(arc_radius - wall,
@@ -228,6 +226,14 @@ def mk_button(angle):
     strip += Pos(0,rod_width+dy, dz) * Box(strip_width, rod_width, 50, align=align('c-+'))
 
     part += (strip_loc * strip) & mk_arc_shell(0,arc_radius) & bounding_box(top)
+
+    bottom_face = part.faces().sort_by(Axis.Z)[0]
+    bottom += extrude(offset(bottom_face, amount=wall), amount=-8)
+    bottom -= extrude(offset(bottom_face, amount=0.1), amount=-8)
+
+    hole_pos = Pos(0,0,4) * Pos(bottom_face.edges().sort_by_distance((0,0,0))[-1].center())
+    part   -= hole_pos * Cylinder(1.45, 6, rotation=Rotation(0,0,angle-45) * Rotation(90,0,0))
+    bottom -= hole_pos * Cylinder(1.45, 6, rotation=Rotation(0,0,angle-45) * Rotation(90,0,0))
 
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]

@@ -1,7 +1,7 @@
+Add variables for screw hole diameter/radius (M2/M3)
 Design button hinge assembly (experiment)
 Split button hinge from buttons
-Add mount-points for button hinge to bottom part
-Button notch to keep it from sticking out
+Button notch against top to keep it from sticking out
 double-check dimensions of breakout board
 fine-adjustment of laser focal distance
 set laser holes up to sensor spec
