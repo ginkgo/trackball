@@ -1,4 +1,6 @@
 Design button hinge assembly (experiment)
+Split button hinge from buttons
+Add mount-points for button hinge to bottom part
 Button notch to keep it from sticking out
 double-check dimensions of breakout board
 fine-adjustment of laser focal distance
@@ -7,4 +9,4 @@ double-check drill hole sizes (experiment)
 double-check ball bearing hole sizes
 bottom/top screwholes
 magnetic cover
-magnetically attached wrist wrest
+magnetically attached wrist-rest

@@ -114,10 +114,10 @@ def mk_bottom():
     # Add back notch in bottom
     bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = bottom_edge.center()
-    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(notch_width,
-                                                                wall,
-                                                                wall,
-                                                                align=align('c--'))
+    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(base_width*0.66,
+                                                      wall,
+                                                      wall,
+                                                      align=align('c--'))
 
     # Add ring-shaped notch around cup hole on bottom
     ring_pos = Pos(hole_face.center())
@@ -127,6 +127,7 @@ def mk_bottom():
     ring -= Box(wall+0.2,30,wall, align=align('c--'))
     part += ring_pos * ring
 
+    # Add hole alignment notch to top part
     top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall,wall*2,wall, align=align('c--'))
 
     
@@ -202,26 +203,31 @@ def mk_button(angle):
     part = mk_arc_shell(arc_radius - wall,
                         arc_radius + wall/2)
     part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
-
-    # part = bounding_box(part)
-    # part &= mk_arc_shell(0,arc_radius+wall/2)
-    # part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
         
     edges = part.edges()
     part = chamfer(edges, 0.5)
 
-    rod_loc = Rotation(0,0,angle-45) * Pos(0,ball/2+5,0)
     rod_width = 5
     
-    rod = rod_loc * Box(rod_width, rod_width, 100, align=align('c-+'))
-    rod &= mk_arc_shell(0, arc_radius)
-    rod &= Box(300,300,40)
-    part += rod
+    strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+10,0))
+    strip_pos = mk_arc_shell(0,arc_radius).find_intersection(strip_axis)[0][0]
+    strip_loc = Pos(0,0,-7) * Pos(*strip_pos) * Rotation(0,0,angle-45)
+    
+    dy = 18
+    dz = -10
+    strip_thickness=wall/2
+    strip_width=2*rod_width
+    strip_path  = Line(  [(           0,  0), (     rod_width,  0)])
+    strip_path += Spline([(   rod_width,  0), (  rod_width+dy, dz)], tangents=[(1,0), (1,-0.25)])
+    strip_path += Line(  [(rod_width+dy, dz), (2*rod_width+dy, dz)])
+    strip_cross_section = Rectangle(strip_width, strip_thickness, align=align('c--'))
 
-    strip_width = 8
-    part += (rod_loc * Box(strip_width, 15, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4, arc_radius)
-    part += (rod_loc * Box(strip_width, 32, 100, align=align('c-c'))) & mk_arc_shell(arc_radius-4-2, arc_radius-4)
+    strip = sweep(sections=Plane.XZ * strip_cross_section, path=Plane.YZ * strip_path)
+    strip += Box(strip_width, rod_width, 30, align=align('c--'))
+    strip += Box(strip_width, rod_width,  1, align=align('c-+'))
+    strip += Pos(0,rod_width+dy, dz) * Box(strip_width, rod_width, 50, align=align('c-+'))                  
 
+    part += (strip_loc * strip) & mk_arc_shell(0,arc_radius) & bounding_box(top)
     
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]
