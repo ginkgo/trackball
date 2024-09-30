@@ -13,6 +13,8 @@ base_height=(ball+10)/2
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
+M3x4 = CounterBoreHole(radius=1.45, depth=4, counter_bore_radius=3.1, counter_bore_depth=1.2)
+
 def align(xyz):
     d = {'c': Align.CENTER,
          '-': Align.MIN,
@@ -109,11 +111,11 @@ def mk_bottom():
     # Add front notch in bottom
     notch_loc = Pos(0,-5 - 0.5,0) * Pos(front_edge.center())
     notch_width = base_width - wall * 2.5
-    part += notch_loc * Box(notch_width, wall, 5, align=align('c+-')) & mk_arc_shell(0, arc_radius - wall - 0.5)
+    part += notch_loc * Box(notch_width*.8, wall, 5, align=align('c+-')) & mk_arc_shell(0, arc_radius - wall - 0.5)
 
     # Add back notch in bottom
-    bottom_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
-    bottom_pos = bottom_edge.center()
+    back_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
+    bottom_pos = back_edge.center()
     part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(base_width*0.66, wall, wall, align=align('c--'))
 
     # Add ring-shaped notch around cup hole on bottom
@@ -127,6 +129,19 @@ def mk_bottom():
     # Add hole alignment notch to top part
     top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall,wall*2,wall, align=align('c--'))
 
+    # Add screw holes
+    bottom_corners = bounding_box(part).faces().sort_by(Axis.Z)[0].vertices()
+    hole_positions = [
+        Pos( 4.5, 4.5)  * Pos(bottom_corners.sort_by(Axis.Y)[:2].sort_by(Axis.X)[0]),
+        Pos(-4.5, 4.5)  * Pos(bottom_corners.sort_by(Axis.Y)[:2].sort_by(Axis.X)[1]),
+        Pos( 6,-6) * Pos(bottom_corners.sort_by(Axis.Y)[2:].sort_by(Axis.X)[0]),
+        Pos(-6,-6) * Pos(bottom_corners.sort_by(Axis.Y)[2:].sort_by(Axis.X)[1]),
+    ]
+
+    for pos in hole_positions:
+        top  += (pos  * Pos(0,0,wall) * Cylinder(radius=3, height=100, align=align('cc-'))) & mk_arc_shell(0,arc_radius-wall)
+        part -= pos  * Rot(180,0,0) * M3x4
+        top  -= pos  * Rot(180,0,0) * M3x4
 
     # Cut hole for USB cable in top
     hole_radius=3
@@ -142,7 +157,6 @@ def mk_bottom():
 
     top -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=3, dir=(0,1,0))
     part -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=10, dir=(0,1,0))
-
 
     return part
 bottom = mk_bottom()
@@ -207,11 +221,11 @@ def mk_button(angle):
 
     rod_width = 5
 
-    strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+10,0))
+    strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+9,0))
     strip_pos = mk_arc_shell(0,arc_radius).find_intersection(strip_axis)[0][0]
     strip_loc = Pos(0,0,-7) * Pos(*strip_pos) * Rotation(0,0,angle-45)
 
-    dy = 18
+    dy = 17
     dz = -10
     strip_thickness=wall/2
     strip_width=2*rod_width
@@ -232,8 +246,8 @@ def mk_button(angle):
     bottom -= extrude(offset(bottom_face, amount=0.1), amount=-8)
 
     hole_pos = Pos(0,0,4) * Pos(bottom_face.edges().sort_by_distance((0,0,0))[-1].center())
-    part   -= hole_pos * Cylinder(1.45, 6, rotation=Rotation(0,0,angle-45) * Rotation(90,0,0))
-    bottom -= hole_pos * Cylinder(1.45, 6, rotation=Rotation(0,0,angle-45) * Rotation(90,0,0))
+    part   -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
+    bottom -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
 
     return part
 buttons = [mk_button(a) for a in range(0,360,90)]

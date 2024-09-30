@@ -1,12 +1,12 @@
-Add variables for screw hole diameter/radius (M2/M3)
+double-check dimensions of breakout board
+Add variables for screw hole diameter/radius (M2/M3) (+ clearance)
+double-check drill hole sizes (experiment)
 Design button hinge assembly (experiment)
 Split button hinge from buttons
 Button notch against top to keep it from sticking out
-double-check dimensions of breakout board
 fine-adjustment of laser focal distance
 set laser holes up to sensor spec
-double-check drill hole sizes (experiment)
 double-check ball bearing hole sizes
-bottom/top screwholes
+
 magnetic cover
 magnetically attached wrist-rest
