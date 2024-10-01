@@ -322,4 +322,4 @@ if __name__ == "__main__":
         print(k)
         exporter = Mesher()
         exporter.add_shape(v)
-        exporter.write(f'{k}.stl')
+        exporter.write(f'stl/{k}.stl')
