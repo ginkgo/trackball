@@ -13,7 +13,8 @@ base_height=(ball+10)/2
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
-M3x4 = CounterBoreHole(radius=1.45, depth=4, counter_bore_radius=3.1, counter_bore_depth=1.2)
+M3x4 = CounterBoreHole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
+M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
 
 def align(xyz):
     d = {'c': Align.CENTER,
@@ -212,18 +213,18 @@ def mk_button(angle):
     global bottom
     rot = Rotation(0,0,angle)
 
-    part = mk_arc_shell(arc_radius - wall,
+    button = mk_arc_shell(arc_radius - wall,
                         arc_radius + wall/2)
-    part &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+    button &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
 
-    edges = part.edges()
-    part = chamfer(edges, 0.5)
+    edges = button.edges()
+    button = chamfer(edges, 0.5)
 
     rod_width = 5
 
     strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+9,0))
     strip_pos = mk_arc_shell(0,arc_radius).find_intersection(strip_axis)[0][0]
-    strip_loc = Pos(0,0,-7) * Pos(*strip_pos) * Rotation(0,0,angle-45)
+    strip_loc = Pos(0,0,-8) * Pos(*strip_pos) * Rotation(0,0,angle-45)
 
     dy = 17
     dz = -10
@@ -235,22 +236,32 @@ def mk_button(angle):
     strip_cross_section = Rectangle(strip_width, strip_thickness, align=align('c--'))
 
     strip = sweep(sections=Plane.XZ * strip_cross_section, path=Plane.YZ * strip_path)
-    strip += Box(strip_width, rod_width, 30, align=align('c--'))
-    strip += Box(strip_width, rod_width,  1, align=align('c-+'))
+    strip += Box(strip_width, rod_width, 3, align=align('c--'))
+    strip += Box(strip_width, rod_width, 1, align=align('c-+'))
     strip += Pos(0,rod_width+dy, dz) * Box(strip_width, rod_width, 50, align=align('c-+'))
 
-    part += (strip_loc * strip) & mk_arc_shell(0,arc_radius) & bounding_box(top)
+    button += (strip_loc * Pos(0,-wall,-1) * Box(strip_width+2*wall, rod_width+wall, 100, align=align('c--'))) & mk_arc_shell(0,arc_radius)
+    button -= strip_loc * Pos(0,0,-1) * Box(strip_width+0.2, rod_width+0.1, 4+0.1, align=align('c--'))
 
-    bottom_face = part.faces().sort_by(Axis.Z)[0]
+    strip = (strip_loc * strip) & mk_arc_shell(0,arc_radius) & bounding_box(top)
+
+    # screw holes attaching buttons to strip
+    for l in [strip_loc * Pos(-3,-wall,1),
+              strip_loc * Pos( 3,-wall,1)]:
+        strip  -= l * Rot(90,0,0) * M2x3
+        button -= l * Rot(90,0,0) * M2x3
+
+    bottom_face = strip.faces().sort_by(Axis.Z)[0]
     bottom += extrude(offset(bottom_face, amount=wall), amount=-8)
     bottom -= extrude(offset(bottom_face, amount=0.1), amount=-8)
 
+    # screw hole attaching strip to bottom
     hole_pos = Pos(0,0,4) * Pos(bottom_face.edges().sort_by_distance((0,0,0))[-1].center())
-    part   -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
+    strip  -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
     bottom -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
 
-    return part
-buttons = [mk_button(a) for a in range(0,360,90)]
+    return button, strip
+buttons, strips = zip(*[mk_button(a) for a in range(0,360,90)])
 
 def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     global bottom
@@ -273,8 +284,8 @@ def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
     return loc * part
 
 button_pcbs = []
-for i,b in enumerate(buttons):
-    p = b.faces().filter_by(Axis.Z).sort_by_distance((0,0,0))[0].center()
+for i,b in enumerate(strips):
+    p = b.faces().filter_by(Axis.Z).sort_by_distance((0,0,-ball/2))[0].center()
     rot = Rotation(0,0,90) if (i not in [1,2]) else Rotation(0,0,-90)
     button_pcbs.append(mk_button_pcb(pos=Pos(p), rot=rot))
 
@@ -289,6 +300,9 @@ result = {
 
 for i,b in enumerate(buttons):
     result[f'button{i}'] = b
+
+for i,s in enumerate(strips):
+    result[f'strip{i}'] = s
 
 for i,b in enumerate(button_pcbs):
     result[f'button_pcb{i}'] = b
