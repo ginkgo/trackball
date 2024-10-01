@@ -165,32 +165,41 @@ bottom = mk_bottom()
 
 def mk_sensor_pcb(loc):
     global bottom, top
-    board = Pos(2.91,0,0) * Box(34,22,1.55, align=align('cc-')) - Box(18,9,5, align=align('cc-'))
+    board = Pos(2.91,0,0) * Box(34,22,1.5, align=align('cc-')) - Box(18,9,5, align=align('cc-'))
 
     hole_locations = [Pos(x,y) for x in (-11.09, +13.41) for y in (-8, +8)]
     board -= [l * Cylinder(.8, 10) for l in hole_locations]
 
 
     strut=4
-    sketch = Polyline([(-2,0,strut-5),
-                       (+2,0,strut-5),
-                       (+2,0,-5),
-                       (-2,0,-5),
-                       (-2,0,strut-5)])
+    sketch = Polyline([(-2,0,strut-4),
+                       (+2,0,strut-4),
+                       (+2,0,-4),
+                       (-2,0,-4),
+                       (-2,0,strut-4)])
     bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
 
-    sketch = Pos(0,0,-5) * Circle(radius=2)
+    sketch = Pos(0,0,-4) * Circle(radius=2)
     bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
 
-    bottom += [loc * l * Cylinder(2.1,5, align=align('cc+')) for l in hole_locations]
+    bottom += [loc * l * Cylinder(2.1,4, align=align('cc+')) for l in hole_locations]
     bottom -= [loc * l * Cylinder(0.9,2, align=align('cc+')) for l in hole_locations]
 
-    top -= loc * Cylinder(2,20)
+    top -= (loc * Box(23,20,5, align=align('cc-')))
+    top += (loc * Pos(0,0,5) * Box(23,20,10, align=align('cc-'))) - Sphere((ball+bearing)/2)
+
+    #opening
+    face = Plane.XY * make_face([ThreePointArc([(0,2), (-2,0), (0,-2)]),
+                                 Polyline([(0,-2), (4,-2), (4,2), (0,2)])])
+
+    top -= loc * Pos(0,0,7.41) * extrude(face, amount=20, dir=(0,0,-1), taper=68.5-90)
+
+    #top -= loc * Cylinder(2,20)
 
     return loc * board
 
-sensor_pcb1 = mk_sensor_pcb(Rotation(0, 45,90) * Pos(0,0,-ball/2 - 3*wall))
-sensor_pcb2 = mk_sensor_pcb(Rotation(0,-45,90) * Pos(0,0,-ball/2 - 3*wall))
+sensor_pcb1 = mk_sensor_pcb(Rotation(0, 45,90) * Pos(0,0,-ball/2 - 7.41))
+sensor_pcb2 = mk_sensor_pcb(Rotation(0,-45,90) * Pos(0,0,-ball/2 - 7.41))
 
 def mk_pipico(pos):
     global top

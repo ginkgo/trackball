@@ -1,5 +1,3 @@
-double-check dimensions of breakout board
-Add variables for screw hole diameter/radius (M2/M3) (+ clearance)
 double-check drill hole sizes (experiment)
 Design button hinge assembly (experiment)
 Button notch against top to keep it from sticking out
