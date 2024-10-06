@@ -1,0 +1,14 @@
+Notes on partial v1 build (rev 5b054fae645)
+
+Clearances for M2/M3 screws seem spot on. I didn't have any issues.
+
+The button assembly is unstable and has way too much flex perpendicular to hinge.
+ * When kept from bending out the top part it seems to be stable -> some extra notches on the underside of the buttons might fix the issue.
+The button scratches against the top cover towards the center - more clearance might be necessary
+
+The top cover's alignment notch for the bottom hole doesn't seem to fit.
+
+The ball bearing holes in the cup seem a tiny bit too large (balls fall out, although I guess that could be fixed with a tiny amount of glue)
+ - might want to look into replacing these with ball transfer units though
+
+Neodymium magnets work well through 2x2mm PLA so magnetically attached wrist rests should be possible.

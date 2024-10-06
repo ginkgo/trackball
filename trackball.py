@@ -222,12 +222,19 @@ def mk_button(angle):
     global bottom
     rot = Rotation(0,0,angle)
 
-    button = mk_arc_shell(arc_radius - wall,
-                        arc_radius + wall/2)
-    button &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.5), amount=-60)
+    button = mk_arc_shell(arc_radius - wall - 1, arc_radius + wall/2)
+    button &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-0.75), amount=-60)
 
     edges = button.edges()
     button = chamfer(edges, 0.5)
+
+    notch = mk_arc_shell(arc_radius - wall - 1.5, arc_radius - wall - 0.5)
+    notch &= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=1), amount=-60)
+    notch -= Pos(0,0,10) * extrude(offset(rot * button_sketch,amount=-3), amount=-60)
+    notch -= Cylinder(ball/2 + 4, 100)
+
+    button += notch
+
 
     rod_width = 5
 
