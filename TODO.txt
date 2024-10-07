@@ -1,9 +1,8 @@
-double-check drill hole sizes (experiment)
 Design button hinge assembly (experiment)
 Button notch against top to keep it from sticking out
 fine-adjustment of laser focal distance
-set laser holes up to sensor spec
 double-check ball bearing hole sizes
+use build123d assembly to put everything together
 
 magnetic cover
 magnetically attached wrist-rest

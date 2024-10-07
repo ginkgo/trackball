@@ -59,7 +59,7 @@ def mk_top():
     part -= Sphere(radius=(ball+bearing)/2)
     part -= Cylinder(bottom_hole_radius,100)
 
-    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-ball/2-bearing/2)  for angle in range(60,360+60,120))
+    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-(ball+bearing)/2)  for angle in range(60,360+60,120))
     part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
 
     base_plate = part.faces().sort_by(Axis.Z)[0]
@@ -128,7 +128,7 @@ def mk_bottom():
     part += ring_pos * ring
 
     # Add hole alignment notch to top part
-    top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall,wall*2,wall, align=align('c--'))
+    top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall*0.75,wall*2,wall, align=align('c--'))
 
     # Add screw holes
     bottom_corners = bounding_box(part).faces().sort_by(Axis.Z)[0].vertices()
@@ -235,7 +235,6 @@ def mk_button(angle):
 
     button += notch
 
-
     rod_width = 5
 
     strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+9,0))
@@ -244,7 +243,7 @@ def mk_button(angle):
 
     dy = 17
     dz = -10
-    strip_thickness=wall/2
+    strip_thickness=wall/4
     strip_width=2*rod_width
     strip_path  = Line(  [(           0,  0), (     rod_width,  0)])
     strip_path += Spline([(   rod_width,  0), (  rod_width+dy, dz)], tangents=[(1,0), (1,-0.25)])
