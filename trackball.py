@@ -1,5 +1,6 @@
 from build123d import *
 from enum import Enum
+import sys
 
 # All measurements in millimeters
 
@@ -11,14 +12,14 @@ ball = 57.2    # pool billiards ball
 # Type of ball suspension used
 class SuspensionType(Enum):
     BEARING_BALL = 1
-    BALL_TRANSPORT_UNIT = 2
+    BALL_TRANSFER_UNIT = 2
 
-suspension_type = SuspensionType.BALL_TRANSPORT_UNIT
+suspension_type = SuspensionType.BALL_TRANSFER_UNIT
 
 # Bearing diameter
 bearing = 2.5
 
-# Measurements for 7.5mm YK310 ball transport unit (from datasheet)
+# Measurements for 7.5mm YK310 ball transfer unit (from datasheet)
 btu_D  = 9
 btu_D1 = 7.5
 btu_L  = 4
@@ -79,7 +80,7 @@ bottom_hole_radius = 8
 
 if suspension_type == SuspensionType.BEARING_BALL:
     bowl_radius = (ball+bearing)/2
-elif suspension_type == SuspensionType.BALL_TRANSPORT_UNIT:
+elif suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
     bowl_radius = ((ball/2 + btu_L1)**2 + (btu_D/2)**2)**0.5
 else:
     assert(False)
@@ -111,7 +112,7 @@ def mk_top():
     ]
     part = chamfer(fillet_edges, wall )
 
-    if suspension_type == SuspensionType.BALL_TRANSPORT_UNIT:
+    if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
         # Cut holes for BTUs at the end
         for angle in range(0,360+60,120):
             loc = Rotation(-8,0,0) * Rotation(0,0,angle) * Rotation(60,0,0) * Pos(0,0,-(ball/2+btu_L1))
@@ -366,8 +367,21 @@ for i,b in enumerate(button_pcbs):
 
 if __name__ == "__main__":
 
-    for k,v in result.items():
-        print(k)
-        exporter = Mesher()
-        exporter.add_shape(v)
-        exporter.write(f'stl/{k}.stl')
+    if len(sys.argv) != 2:
+        print(f'Usage: {sys.argv[0]} STL|STEP')
+        exit(0)
+
+    if sys.argv[1] == 'STL':
+        for k,v in result.items():
+            print(k)
+            exporter = Mesher()
+            exporter.add_shape(v)
+            exporter.write(f'stl/{k}.stl')
+    elif sys.argv[1] == 'STEP':
+
+        for k,v in result.items():
+            print(k)
+            export_step(v, f'step/{k}.step')
+    else:
+        print(f'Usage: {sys.argv[0]} STL|STEP')
+        exit(0)

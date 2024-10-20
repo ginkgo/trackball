@@ -1,7 +1,6 @@
-double-check ball bearing hole sizes
-add alternative holes for ball transport units
 use build123d assembly to put everything together
-export STEP files instead of STL
+split bowl part from top
+add pulleys on button strips to remove them more easily
 
 magnetic cover
 magnetically attached wrist-rest
