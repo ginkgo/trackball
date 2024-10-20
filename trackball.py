@@ -1,20 +1,45 @@
 from build123d import *
+from enum import Enum
 
+# All measurements in millimeters
+
+# Ball diameter (pick one)
 ball = 57.2    # pool billiards ball
 #ball = 52.4   # snooker ball
 #ball = 55     # Kensington ball
 
+# Type of ball suspension used
+class SuspensionType(Enum):
+    BEARING_BALL = 1
+    BALL_TRANSPORT_UNIT = 2
+
+suspension_type = SuspensionType.BALL_TRANSPORT_UNIT
+
+# Bearing diameter
 bearing = 2.5
+
+# Measurements for 7.5mm YK310 ball transport unit (from datasheet)
+btu_D  = 9
+btu_D1 = 7.5
+btu_L  = 4
+btu_L1 = 1.1
+btu_H  = 1
+
+# Thickness of walls
 wall = 2
 
 base_width=110
 base_height=(ball+10)/2
 
+# Parameters of trackball case arc
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
+# Bore holes for screws
 M3x4 = CounterBoreHole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
 M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
+
+eta = 0.1 # General tolerance
 
 def align(xyz):
     d = {'c': Align.CENTER,
@@ -52,15 +77,25 @@ button_mask = extrude(button_sketch, amount=-60)
 
 bottom_hole_radius = 8
 
+if suspension_type == SuspensionType.BEARING_BALL:
+    bowl_radius = (ball+bearing)/2
+elif suspension_type == SuspensionType.BALL_TRANSPORT_UNIT:
+    bowl_radius = ((ball/2 + btu_L1)**2 + (btu_D/2)**2)**0.5
+else:
+    assert(False)
+
 def mk_top():
     part = Part()
     part += mk_arc_shell(0,arc_radius)
     part &= Pos(0,30,0) * Box(base_width, base_width+60, base_height*2)
-    part -= Sphere(radius=(ball+bearing)/2)
+
+    part -= Sphere(radius=bowl_radius)
     part -= Cylinder(bottom_hole_radius,100)
 
-    locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-(ball+bearing)/2)  for angle in range(60,360+60,120))
-    part -= [loc * Cylinder(bearing/2, bearing) for loc in locs]
+    if suspension_type == SuspensionType.BEARING_BALL:
+        # Cut holes for bearing balls before offset
+        locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-(ball+bearing)/2)  for angle in range(60,360+60,120))
+        part -= [loc * Cylinder(bearing/2 + eta, bearing + eta) for loc in locs]
 
     base_plate = part.faces().sort_by(Axis.Z)[0]
     part = offset(part.solids()[0], amount=-wall, openings=base_plate)
@@ -75,6 +110,15 @@ def mk_top():
         part.edges().sort_by_distance(Vertex(-1,0,-ball/2))[0],
     ]
     part = chamfer(fillet_edges, wall )
+
+    if suspension_type == SuspensionType.BALL_TRANSPORT_UNIT:
+        # Cut holes for BTUs at the end
+        for angle in range(0,360+60,120):
+            loc = Rotation(-8,0,0) * Rotation(0,0,angle) * Rotation(60,0,0) * Pos(0,0,-(ball/2+btu_L1))
+
+            part += loc * Pos(0,0,-eta/2) * Cylinder(btu_D/2+wall, btu_H+wall, align=align('cc+'))
+            part -= loc * Cylinder(btu_D/2 + eta, 2* (btu_H + eta), align=align('ccc'))
+            part -= loc * Cylinder(btu_D1/2 + eta, 2* (btu_H + btu_L), align=align('ccc'))
 
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
@@ -185,16 +229,14 @@ def mk_sensor_pcb(loc):
     bottom += [loc * l * Cylinder(2.1,4, align=align('cc+')) for l in hole_locations]
     bottom -= [loc * l * Cylinder(0.9,2, align=align('cc+')) for l in hole_locations]
 
-    top -= (loc * Box(23,20,5, align=align('cc-')))
-    top += (loc * Pos(0,0,5) * Box(23,20,10, align=align('cc-'))) - Sphere((ball+bearing)/2)
+    top -= (loc * Box(17,15,5, align=align('cc-')))
+    top += (loc * Pos(0,0,5) * Box(17,15,10, align=align('cc-'))) - Sphere(bowl_radius)
 
     #opening
     face = Plane.XY * make_face([ThreePointArc([(0,2), (-2,0), (0,-2)]),
                                  Polyline([(0,-2), (4,-2), (4,2), (0,2)])])
 
     top -= loc * Pos(0,0,7.41) * extrude(face, amount=20, dir=(0,0,-1), taper=68.5-90)
-
-    #top -= loc * Cylinder(2,20)
 
     return loc * board
 
