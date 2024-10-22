@@ -96,7 +96,7 @@ def mk_top():
     if suspension_type == SuspensionType.BEARING_BALL:
         # Cut holes for bearing balls before offset
         locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-(ball+bearing)/2)  for angle in range(60,360+60,120))
-        part -= [loc * Cylinder(bearing/2 + eta, bearing + eta) for loc in locs]
+        part -= [loc * Cylinder(bearing/2, bearing + eta) for loc in locs]
 
     base_plate = part.faces().sort_by(Axis.Z)[0]
     part = offset(part.solids()[0], amount=-wall, openings=base_plate)
