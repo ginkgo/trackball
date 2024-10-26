@@ -9,6 +9,12 @@ ball = 57.2    # pool billiards ball
 #ball = 52.4   # snooker ball
 #ball = 55     # Kensington ball
 
+# Thickness of walls
+wall = 2
+
+base_width=110
+base_height=(ball+10)/2
+
 # Type of ball suspension used
 class SuspensionType(Enum):
     BEARING_BALL = 1
@@ -26,11 +32,11 @@ btu_L  = 4
 btu_L1 = 1.1
 btu_H  = 1
 
-# Thickness of walls
-wall = 2
+class CableMountType(Enum):
+    HOLE = 1
+    USBC_PLUG = 2
 
-base_width=110
-base_height=(ball+10)/2
+cable_mount_type = CableMountType.USBC_PLUG
 
 # Parameters of trackball case arc
 arc_radius=300/2
@@ -189,20 +195,34 @@ def mk_bottom():
         part -= pos  * Rot(180,0,0) * M3x4
         top  -= pos  * Rot(180,0,0) * M3x4
 
-    # Cut hole for USB cable in top
-    hole_radius=3
-    hole_sketch = [
-        Polyline([(hole_radius,0,hole_radius),
-                  (hole_radius,0,0),
-                  (-hole_radius,0,0),
-                  (-hole_radius,0,hole_radius)]),
-        ThreePointArc([(-hole_radius,0,hole_radius),
-                       (0,0,hole_radius*2),
-                       (hole_radius,0,hole_radius)])
-    ]
+    if cable_mount_type == CableMountType.HOLE:
+        # Cut hole for USB cable in top
+        hole_radius=3
+        hole_sketch = [
+            Polyline([(hole_radius,0,hole_radius),
+                      (hole_radius,0,0),
+                      (-hole_radius,0,0),
+                      (-hole_radius,0,hole_radius)]),
+            ThreePointArc([(-hole_radius,0,hole_radius),
+                           (0,0,hole_radius*2),
+                           (hole_radius,0,hole_radius)])
+        ]
 
-    top -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=3, dir=(0,1,0))
-    part -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=10, dir=(0,1,0))
+        top -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=3, dir=(0,1,0))
+        part -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=10, dir=(0,1,0))
+    elif cable_mount_type == CableMountType.USBC_PLUG:
+        loc = Pos(bottom_pos) * Pos(0,wall,6)
+
+        usbc_sketch = Plane.XZ * fillet(Rectangle(8.34,2.56).vertices(), radius=1.25)
+        top -= loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
+
+        hole_dist = 16.15
+        top -= loc * Rot(90,0,0) * Pos( hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
+        top -= loc * Rot(90,0,0) * Pos(-hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
+
+    else:
+        assert(False)
+
 
     return part
 bottom = mk_bottom()

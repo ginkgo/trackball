@@ -1,7 +1,6 @@
 use build123d assembly to put everything together
 split bowl part from top  and add extra attachment points to bottom
 add pulleys on button strips to remove them more easily
-add mount point for USB-C port
 add optional ginkgo logo
 Add README
 Add requirements.txt
