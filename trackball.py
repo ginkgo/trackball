@@ -32,6 +32,9 @@ btu_L  = 4
 btu_L1 = 1.1
 btu_H  = 1
 
+add_logo=False
+add_text=''
+
 class CableMountType(Enum):
     HOLE = 1
     USBC_PLUG = 2
@@ -130,10 +133,17 @@ def mk_top():
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
 
-    # text = Text("Awesome...", font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
-    # text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
-    # # f = text.faces()[0]
-    # part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
+    if add_logo:
+        logo = make_face(import_svg('ginkgoleaf.svg'))
+        logo = logo.scale(0.1)
+        logo = Pos(-logo.center()) * logo
+        logo = Pos(12,-14) * Pos(-base_width/2,75,0) * Rotation(0,0,180+30) * logo
+        part -= [extrude(f.project_to_shape_alt(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in logo.faces()]
+
+    if add_text:
+        text = Text(add_text, font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
+        text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
+        part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
 
     return part
 top = mk_top()
@@ -310,13 +320,15 @@ def mk_button(angle):
     strip_width=2*rod_width
     strip_path  = Line(  [(           0,  0), (     rod_width,  0)])
     strip_path += Spline([(   rod_width,  0), (  rod_width+dy, dz)], tangents=[(1,0), (1,-0.25)])
-    strip_path += Line(  [(rod_width+dy, dz), (2*rod_width+dy, dz)])
+    strip_path += Line(  [(rod_width+dy, dz), (1.5*rod_width+dy, dz)])
     strip_cross_section = Rectangle(strip_width, strip_thickness, align=align('c--'))
 
     strip = sweep(sections=Plane.XZ * strip_cross_section, path=Plane.YZ * strip_path)
     strip += Box(strip_width, rod_width, 3, align=align('c--'))
     strip += Box(strip_width, rod_width, 1, align=align('c-+'))
     strip += Pos(0,rod_width+dy, dz) * Box(strip_width, rod_width, 50, align=align('c-+'))
+    strip += Pos(0,rod_width+dy+rod_width/2, dz) * Rotation(0,90,0) * Cylinder(rod_width/2, strip_width)
+    strip -= Pos(0,rod_width+dy+rod_width/2, dz) * Rotation(0,90,0) * Cylinder(rod_width/4, strip_width)
 
     button += (strip_loc * Pos(0,-wall,-1) * Box(strip_width+2*wall, rod_width+wall, 100, align=align('c--'))) & mk_arc_shell(0,arc_radius)
     button -= strip_loc * Pos(0,0,-1) * Box(strip_width+0.2, rod_width+0.1, 4+0.1, align=align('c--'))

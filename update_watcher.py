@@ -34,7 +34,7 @@ def update_handler(signum, frame):
         return
     watch_file_md5 = md5
 
-    print(f"Reloading {watch_file}.")
+    print(f"Reloading {watch_file}..", end='')
     
     try:
         importlib.reload(module)
@@ -50,6 +50,8 @@ def update_handler(signum, frame):
         print("#" * 80)
         print()
 
+    print(' done (http://127.0.0.1:32323/)')
+        
 update_handler(0,0)
         
 signal.signal(signal.SIGIO, update_handler)
