@@ -8,10 +8,12 @@ pico_sdk_init()
 
 add_compile_options(-Wall)
 
-add_executable(trackball src/trackball.cc src/pmw3360.cc src/srom.cc src/crc.cc)
+add_executable(trackball src/trackball.cc src/pmw3360.cc src/srom.cc src/crc.cc src/pio_spi.c)
+
+pico_generate_pio_header(trackball ${CMAKE_CURRENT_LIST_DIR}/src/spi.pio)
 
 target_include_directories(trackball PRIVATE src)
 
-target_link_libraries(trackball pico_stdlib hardware_spi hardware_flash tinyusb_device tinyusb_board)
+target_link_libraries(trackball pico_stdlib hardware_spi hardware_flash hardware_pio tinyusb_device tinyusb_board)
 
 pico_add_extra_outputs(trackball)

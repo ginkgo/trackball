@@ -41,6 +41,10 @@
 #include "crc.h"
 #include "pmw3360.h"
 
+extern "C" {
+#include "pio_spi.h"
+}
+
 // These IDs are bogus. If you want to distribute any hardware using this,
 // you will have to get real ones.
 #define USB_VID 0xCAFE
