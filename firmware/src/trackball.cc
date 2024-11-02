@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2021 Jacek Fedorynski
@@ -56,18 +56,23 @@
 #define CONFIG_OFFSET_IN_FLASH (PRESUMED_FLASH_SIZE - FLASH_SECTOR_SIZE)
 #define FLASH_CONFIG_IN_MEMORY (((uint8_t*) XIP_BASE) + CONFIG_OFFSET_IN_FLASH)
 
-uint button_pins[NBUTTONS] = { 16, 17, 24, 26 };
+uint button_pins[NBUTTONS] = { 8, 9, 10, 11 };
 
 #define SENSOR0_SPI spi0
-#define SENSOR0_MISO 4
-#define SENSOR0_MOSI 3
+#define SENSOR0_MISO 0
+#define SENSOR0_NCS 1
 #define SENSOR0_SCK 2
-#define SENSOR0_NCS 9
+#define SENSOR0_MOSI 3
 #define SENSOR1_SPI spi0
-#define SENSOR1_MISO 20
-#define SENSOR1_MOSI 23
-#define SENSOR1_SCK 18
-#define SENSOR1_NCS 25
+#define SENSOR1_MISO 4
+#define SENSOR1_NCS 5
+#define SENSOR1_SCK 6
+#define SENSOR1_MOSI 7
+/* #define SENSOR1_SPI spi1 */
+/* #define SENSOR1_MISO 12 */
+/* #define SENSOR1_NCS 13 */
+/* #define SENSOR1_SCK 14 */
+/* #define SENSOR1_MOSI 15 */
 
 PMW3360 sensors[NSENSORS] = {
     PMW3360(SENSOR0_SPI, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS),
@@ -288,6 +293,8 @@ float running_avg_y = 0;
 float running_avg_hscroll = 0;
 float running_avg_vscroll = 0;
 
+#define ABS(x) (x > 0 ? x : -x)
+
 int16_t handle_scroll(int sensor, int axis, int16_t movement, uint8_t multiplier_mask, float* running_avg_scroll) {
     int16_t ret = 0;
     *running_avg_scroll += 0.1 * movement / current_cpi[sensor];
@@ -433,37 +440,58 @@ void hid_task() {
 
     for (int sensor = 0; sensor < NSENSORS; sensor++) {
         sensors[sensor].update();
-        for (int axis = 0; axis < 2; axis++) {
-            int16_t movement = sensors[sensor].movement[axis];
-            SensorFunction sensor_function =
-                shifted ? config.sensor_shifted_function[sensor][axis] : config.sensor_function[sensor][axis];
-            if (static_cast<int>(sensor_function) < 0) {
-                movement *= -1;
-            }
-            switch (sensor_function) {
-                case SensorFunction::NO_FUNCTION:
-                    break;
-                case SensorFunction::CURSOR_X:
-                case SensorFunction::CURSOR_X_INVERTED:
-                    report.dx += movement;
-                    running_avg_x += 0.1 * movement / current_cpi[sensor];
-                    break;
-                case SensorFunction::CURSOR_Y:
-                case SensorFunction::CURSOR_Y_INVERTED:
-                    report.dy += movement;
-                    running_avg_y += 0.1 * movement / current_cpi[sensor];
-                    break;
-                case SensorFunction::VERTICAL_SCROLL:
-                case SensorFunction::VERTICAL_SCROLL_INVERTED:
-                    report.vwheel += handle_scroll(sensor, axis, movement, 1 << 0, &running_avg_vscroll);
-                    break;
-                case SensorFunction::HORIZONTAL_SCROLL:
-                case SensorFunction::HORIZONTAL_SCROLL_INVERTED:
-                    report.hwheel += handle_scroll(sensor, axis, movement, 1 << 2, &running_avg_hscroll);
-                    break;
-            }
-        }
-    }
+	}
+
+	int16_t movement_x =           (sensors[0].movement[0] + sensors[1].movement[0]) / 2;
+	int16_t movement_y = (int16_t)((sensors[0].movement[1] + sensors[1].movement[1]) * 0.7071067811865475);
+	int16_t movement_z =            sensors[0].movement[1] - sensors[1].movement[1];
+
+	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) * 2) {
+		movement_z = 0;
+	} else {
+		movement_x = 0;
+		movement_y = 0;
+	}
+
+	report.dx     -= movement_x;
+	report.dy     += movement_y;
+	report.vwheel += handle_scroll(0,0, movement_z, 1<<0, &running_avg_vscroll);
+
+	running_avg_x += 0.1 * movement_x / current_cpi[0];
+	running_avg_y += 0.1 * movement_y / current_cpi[0];
+
+	/* { */
+    /*     for (int axis = 0; axis < 2; axis++) { */
+    /*         int16_t movement = sensors[sensor].movement[axis]; */
+    /*         SensorFunction sensor_function = */
+    /*             shifted ? config.sensor_shifted_function[sensor][axis] : config.sensor_function[sensor][axis]; */
+    /*         if (static_cast<int>(sensor_function) < 0) { */
+    /*             movement *= -1; */
+    /*         } */
+    /*         switch (sensor_function) { */
+    /*             case SensorFunction::NO_FUNCTION: */
+    /*                 break; */
+    /*             case SensorFunction::CURSOR_X: */
+    /*             case SensorFunction::CURSOR_X_INVERTED: */
+    /*                 report.dx += movement; */
+    /*                 running_avg_x += 0.1 * movement / current_cpi[sensor]; */
+    /*                 break; */
+    /*             case SensorFunction::CURSOR_Y: */
+    /*             case SensorFunction::CURSOR_Y_INVERTED: */
+    /*                 report.dy += movement; */
+    /*                 running_avg_y += 0.1 * movement / current_cpi[sensor]; */
+    /*                 break; */
+    /*             case SensorFunction::VERTICAL_SCROLL: */
+    /*             case SensorFunction::VERTICAL_SCROLL_INVERTED: */
+    /*                 report.vwheel += handle_scroll(sensor, axis, movement, 1 << 0, &running_avg_vscroll); */
+    /*                 break; */
+    /*             case SensorFunction::HORIZONTAL_SCROLL: */
+    /*             case SensorFunction::HORIZONTAL_SCROLL_INVERTED: */
+    /*                 report.hwheel += handle_scroll(sensor, axis, movement, 1 << 2, &running_avg_hscroll); */
+    /*                 break; */
+    /*         } */
+    /*     } */
+    /* } */
 
     // uncomment to have pressing all buttons reset into BOOTSEL
     // (convenient during development)
