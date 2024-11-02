@@ -1,8 +1,15 @@
+Include firmware in project
+  Switch to 2x PIO SPI
+  Fuse the PIO
+
+Add notches on the side for stability
 use build123d assembly to put everything together
 split bowl part from top  and add extra attachment points to bottom
 Add README
 Add requirements.txt
 Make options configurable from commandline args
+
+
 
 magnetic cover
 magnetically attached wrist-rest

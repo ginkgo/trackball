@@ -35,6 +35,7 @@ def update_handler(signum, frame):
     watch_file_md5 = md5
 
     print(f"Reloading {watch_file}..", end='')
+    sys.stdout.flush()
     
     try:
         importlib.reload(module)
