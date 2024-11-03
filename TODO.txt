@@ -1,4 +1,3 @@
-Switch to 2x PIO SPI
 Create fused sensor interface class
 Fuse the PIO
 

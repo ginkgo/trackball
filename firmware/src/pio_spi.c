@@ -5,6 +5,7 @@
  */
 
 #include "pio_spi.h"
+#include <stdio.h>
 
 // Just 8 bit functions provided here. The PIO program supports any frame size
 // 1...32, but the software to do the necessary FIFO shuffling is left as an
