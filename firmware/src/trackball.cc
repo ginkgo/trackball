@@ -258,11 +258,11 @@ config_t config = {
 		{ SensorFunction::VERTICAL_SCROLL, SensorFunction::NO_FUNCTION },
 	},
 	.sensor_cpi = {
-		600 / 100,
+		800 / 100,
 		800 / 100,
 	},
 	.sensor_shifted_cpi = {
-		600 / 100,
+		800 / 100,
 		800 / 100,
 	},
 	.button_function = {
@@ -447,7 +447,7 @@ void hid_task() {
 	int16_t movement_y = (int16_t)((sensors[0].movement[1] + sensors[1].movement[1]) * 0.7071067811865475);
 	int16_t movement_z =			sensors[0].movement[1] - sensors[1].movement[1];
 
-	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) * 2) {
+	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z)) {
 		movement_z = 0;
 	} else {
 		movement_x = 0;
@@ -562,7 +562,7 @@ int main() {
 	// Use GPIO 16&17 for serial
 	gpio_set_function(16, GPIO_FUNC_UART); //TX
 	gpio_set_function(17, GPIO_FUNC_UART); //RX
-	
+
 	stdio_init_all();
 	printf("Hello :>\n");
 	board_init();
@@ -571,10 +571,25 @@ int main() {
 	sensors_init();
 	tusb_init();
 
-	
+
+	int count = 0;
+	uint64_t start = to_us_since_boot(get_absolute_time());
 	while (true) {
 		tud_task();	 // tinyusb device task
 		hid_task();
+
+		sleep_us(500);
+
+		if (count == 1000) {
+			uint64_t end = to_us_since_boot(get_absolute_time());
+			uint64_t diff_us = end-start;
+
+			printf("%.2f Hz sampling\n", 1000.0f / ( diff_us / 1000000.0));
+
+			count = 0;
+			start = end;
+		}
+		count++;
 	}
 
 	return 0;
