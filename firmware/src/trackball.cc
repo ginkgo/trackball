@@ -572,7 +572,7 @@ int main() {
 		tud_task();	 // tinyusb device task
 		hid_task();
 
-		sleep_us(100);
+		sleep_us(500);
 
 		if (count == 1000) {
 			uint64_t end = to_us_since_boot(get_absolute_time());

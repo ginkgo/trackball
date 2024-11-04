@@ -79,39 +79,41 @@ void PMW3360_pair::cs_deselect(uint8_t sensor) {
 }
 
 void PMW3360_pair::read_registers(uint8_t reg_addr, uint8_t (&v)[2]) {
-	for (uint8_t i = 0; i < 2; ++i)
-	{
-		cs_select(i);
+	cs_select(0);
+	cs_select(1);
 
-		// send adress of the register, with MSBit = 0 to indicate it's a read
-		uint8_t x = reg_addr & 0x7f;
-		pio_spi_write8_blocking(&sensors[i].spi, &x, 1);
-		sleep_us(100);	// tSRAD
-		// read data
-		pio_spi_read8_blocking(&sensors[i].spi, &v[i], 1);
+	// send adress of the register, with MSBit = 0 to indicate it's a read
+	uint8_t x = reg_addr & 0x7f;
+	pio_spi_write8_blocking(&sensors[0].spi, &x, 1);
+	pio_spi_write8_blocking(&sensors[1].spi, &x, 1);
+	sleep_us(100);	// tSRAD
+	// read data
+	pio_spi_read8_blocking(&sensors[0].spi, &v[0], 1);
+	pio_spi_read8_blocking(&sensors[1].spi, &v[1], 1);
 
-		sleep_us(1);  // tSCLK-NCS for read operation is 120ns
-		cs_deselect(i);
-		sleep_us(19);  // tSRW/tSRR (=20us) minus tSCLK-NCS
-	}
+	sleep_us(1);  // tSCLK-NCS for read operation is 120ns
+	cs_deselect(0);
+	cs_deselect(1);
+	sleep_us(19);  // tSRW/tSRR (=20us) minus tSCLK-NCS
 }
 
 void PMW3360_pair::write_register(uint8_t reg_addr, uint8_t data) {
-	for (uint8_t i = 0; i < 2; ++i)
-	{
-		cs_select(i);
+	cs_select(0);
+	cs_select(1);
 
-		// send adress of the register, with MSBit = 1 to indicate it's a write
-		uint8_t x = reg_addr | 0x80;
-		pio_spi_write8_blocking(&sensors[i].spi, &x, 1);
+	// send adress of the register, with MSBit = 1 to indicate it's a write
+	uint8_t x = reg_addr | 0x80;
+	pio_spi_write8_blocking(&sensors[0].spi, &x, 1);
+	pio_spi_write8_blocking(&sensors[1].spi, &x, 1);
 
-		// send data
-		pio_spi_write8_blocking(&sensors[i].spi, &data, 1);
+	// send data
+	pio_spi_write8_blocking(&sensors[0].spi, &data, 1);
+	pio_spi_write8_blocking(&sensors[1].spi, &data, 1);
 
-		sleep_us(20);  // tSCLK-NCS for write operation
-		cs_deselect(i);
-		sleep_us(100);	// tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
-	}
+	sleep_us(20);  // tSCLK-NCS for write operation
+	cs_deselect(0);
+	cs_deselect(1);
+	sleep_us(100);	// tSWW/tSWR (=120us) minus tSCLK-NCS. Could be shortened, but is looks like a safe lower bound
 }
 
 
