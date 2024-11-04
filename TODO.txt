@@ -1,4 +1,4 @@
-Create fused sensor interface class
+Rearrange SPI pins
 Fuse the PIO
 
 Add notches on the side for stability

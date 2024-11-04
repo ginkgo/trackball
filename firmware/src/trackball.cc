@@ -68,6 +68,7 @@ uint button_pins[NBUTTONS] = { 8, 9, 10, 11 };
 #define SENSOR0_NCS 1
 #define SENSOR0_SCK 2
 #define SENSOR0_MOSI 3
+
 #define SENSOR1_PIO pio1
 #define SENSOR1_SM 1
 #define SENSOR1_MISO 4
@@ -75,10 +76,9 @@ uint button_pins[NBUTTONS] = { 8, 9, 10, 11 };
 #define SENSOR1_SCK 6
 #define SENSOR1_MOSI 7
 
-PMW3360 sensors[NSENSORS] = {
-	PMW3360(SENSOR0_PIO, SENSOR0_SM, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS),
-	PMW3360(SENSOR1_PIO, SENSOR1_SM, SENSOR1_MISO, SENSOR1_MOSI, SENSOR1_SCK, SENSOR1_NCS),
-};
+PMW3360_pair sensors(
+	{{SENSOR0_PIO, SENSOR0_SM}, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS},
+	{{SENSOR1_PIO, SENSOR1_SM}, SENSOR1_MISO, SENSOR1_MOSI, SENSOR1_SCK, SENSOR1_NCS});
 
 tusb_desc_device_t const desc_device = {
 	.bLength = sizeof(tusb_desc_device_t),
@@ -387,12 +387,10 @@ void hid_task() {
 	}
 
 	// set CPI if not already correct
-	for (int i = 0; i < NSENSORS; i++) {
-		uint8_t wanted_cpi = shifted ? config.sensor_shifted_cpi[i] : config.sensor_cpi[i];
-		if (current_cpi[i] != wanted_cpi && wanted_cpi >= 1 && wanted_cpi <= 120) {
-			sensors[i].set_cpi(wanted_cpi * 100);
-			current_cpi[i] = wanted_cpi;
-		}
+	uint8_t wanted_cpi = shifted ? config.sensor_shifted_cpi[0] : config.sensor_cpi[0];
+	if (current_cpi[0] != wanted_cpi && wanted_cpi >= 1 && wanted_cpi <= 120) {
+		sensors.set_cpi(wanted_cpi * 100);
+		current_cpi[0] = wanted_cpi;
 	}
 
 	for (int i = 0; i < NBUTTONS; i++) {
@@ -439,15 +437,13 @@ void hid_task() {
 	running_avg_vscroll *= 0.9;
 	running_avg_hscroll *= 0.9;
 
-	for (int sensor = 0; sensor < NSENSORS; sensor++) {
-		sensors[sensor].update();
-	}
+	sensors.update();
 
-	int16_t movement_x =		   (sensors[0].movement[0] + sensors[1].movement[0]) / 2;
-	int16_t movement_y = (int16_t)((sensors[0].movement[1] + sensors[1].movement[1]) * 0.7071067811865475);
-	int16_t movement_z =			sensors[0].movement[1] - sensors[1].movement[1];
+	int16_t movement_x =		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2;
+	int16_t movement_y = (int16_t)((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
+	int16_t movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
 
-	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z)) {
+	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) / 4) {
 		movement_z = 0;
 	} else {
 		movement_x = 0;
@@ -521,9 +517,7 @@ void pins_init() {
 }
 
 void sensors_init() {
-	for (int i = 0; i < NSENSORS; i++) {
-		sensors[i].init();
-	}
+	sensors.init();
 }
 
 void run_config_command() {
@@ -578,7 +572,7 @@ int main() {
 		tud_task();	 // tinyusb device task
 		hid_task();
 
-		sleep_us(500);
+		sleep_us(100);
 
 		if (count == 1000) {
 			uint64_t end = to_us_since_boot(get_absolute_time());
