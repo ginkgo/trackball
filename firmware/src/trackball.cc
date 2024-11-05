@@ -560,7 +560,6 @@ int main() {
 	gpio_set_function(17, GPIO_FUNC_UART); //RX
 
 	stdio_init_all();
-	printf("Hello :>\n");
 	board_init();
 	load_config();
 	pins_init();
@@ -576,6 +575,7 @@ int main() {
 
 		if (did_sensor_reading) {
 			count++;
+			sleep_us(100);
 		}
 
 		if (count == 1000) {

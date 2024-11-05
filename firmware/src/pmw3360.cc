@@ -45,26 +45,54 @@ void PMW3360_pair::update() {
 	// write 0x01 to Motion register and read from it to freeze the motion values and make them available
 	write_register(Motion, 0x01);
 
+	uint8_t m[2];
+
 	uint8_t v[2];
 	read_registers(Motion, v);
 	is_on_surface = !((v[0] | v[1]) & (1 << 3));
+
+	m[0] |= v[0];
+	m[1] |= v[1];
 
 	read_registers(Delta_X_L, v);
 	movement[0][0] = v[0];
 	movement[1][0] = v[1];
 
+	m[0] |= v[0];
+	m[1] |= v[1];
+
 	read_registers(Delta_X_H, v);
 	movement[0][0] |= ((int16_t) v[0]) << 8;
 	movement[1][0] |= ((int16_t) v[1]) << 8;
+
+	m[0] |= v[0];
+	m[1] |= v[1];
 
 	read_registers(Delta_Y_L, v);
 	movement[0][1] = v[0];
 	movement[1][1] = v[1];
 
+	m[0] |= v[0];
+	m[1] |= v[1];
+
 	read_registers(Delta_Y_H, v);
 	movement[0][1] |= ((int16_t) v[0]) << 8;
 	movement[1][1] |= ((int16_t) v[1]) << 8;
 
+	m[0] |= v[0];
+	m[1] |= v[1];
+
+	if ((m[0] == 0 && m[1] != 0) || (m[0] != 0 && m[1] == 0))
+	{
+		dead_sensor_frames++;
+
+		if (dead_sensor_frames > 100)
+		{
+			printf("Restarting sensors\n");
+			perform_startup();
+			dead_sensor_frames == 0;
+		}
+	}
 }
 
 void PMW3360_pair::cs_select(uint8_t sensor) {
