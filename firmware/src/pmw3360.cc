@@ -64,6 +64,7 @@ void PMW3360_pair::update() {
 	read_registers(Delta_Y_H, v);
 	movement[0][1] |= ((int16_t) v[0]) << 8;
 	movement[1][1] |= ((int16_t) v[1]) << 8;
+
 }
 
 void PMW3360_pair::cs_select(uint8_t sensor) {

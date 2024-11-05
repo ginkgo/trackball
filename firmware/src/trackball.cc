@@ -60,21 +60,21 @@ extern "C" {
 #define CONFIG_OFFSET_IN_FLASH (PRESUMED_FLASH_SIZE - FLASH_SECTOR_SIZE)
 #define FLASH_CONFIG_IN_MEMORY (((uint8_t*) XIP_BASE) + CONFIG_OFFSET_IN_FLASH)
 
-uint button_pins[NBUTTONS] = { 8, 9, 10, 11 };
+uint button_pins[NBUTTONS] = { 10,11,12,13 };
 
 #define SENSOR0_PIO pio0
 #define SENSOR0_SM 0
-#define SENSOR0_MISO 0
-#define SENSOR0_NCS 1
 #define SENSOR0_SCK 2
 #define SENSOR0_MOSI 3
+#define SENSOR0_MISO 4
+#define SENSOR0_NCS 5
 
 #define SENSOR1_PIO pio1
 #define SENSOR1_SM 1
-#define SENSOR1_MISO 4
-#define SENSOR1_NCS 5
 #define SENSOR1_SCK 6
 #define SENSOR1_MOSI 7
+#define SENSOR1_MISO 8
+#define SENSOR1_NCS 9
 
 PMW3360_pair sensors(
 	{{SENSOR0_PIO, SENSOR0_SM}, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS},
@@ -367,9 +367,9 @@ void handle_twist_to_scroll() {
 	}
 }
 
-void hid_task() {
+bool hid_task() {
 	if (!tud_hid_ready()) {
-		return;
+		return false;
 	}
 
 	memset(&report, 0, sizeof(report));
@@ -502,6 +502,8 @@ void hid_task() {
 	handle_twist_to_scroll();
 
 	tud_hid_report(1, &report, sizeof(report));
+
+	return true;
 }
 
 void pin_init(uint pin) {
@@ -563,16 +565,18 @@ int main() {
 	load_config();
 	pins_init();
 	sensors_init();
-	tusb_init();
 
+	tusb_init();
 
 	int count = 0;
 	uint64_t start = to_us_since_boot(get_absolute_time());
 	while (true) {
 		tud_task();	 // tinyusb device task
-		hid_task();
+		bool did_sensor_reading = hid_task();
 
-		sleep_us(500);
+		if (did_sensor_reading) {
+			count++;
+		}
 
 		if (count == 1000) {
 			uint64_t end = to_us_since_boot(get_absolute_time());
@@ -583,7 +587,6 @@ int main() {
 			count = 0;
 			start = end;
 		}
-		count++;
 	}
 
 	return 0;

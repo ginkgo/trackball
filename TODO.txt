@@ -1,4 +1,4 @@
-Rearrange SPI pins
+Detect and restart lagging sensor
 Fuse the PIO
 
 Add notches on the side for stability
