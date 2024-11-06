@@ -178,7 +178,17 @@ def mk_bottom():
     # Add back notch in bottom
     back_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = back_edge.center()
-    part += Pos(0,wall+0.5,0) * Pos(bottom_pos) * Box(base_width*0.66, wall, wall, align=align('c--'))
+    part += Pos(0,wall+eta,0) * Pos(bottom_pos) * Box(base_width*0.66, wall, wall, align=align('c--'))
+
+    # Add right notch
+    right_edge = bottom_face.edges().sort_by(Axis.X)[0]
+    right_pos = right_edge.center()
+    part += Pos(wall+eta,0,0) * Pos(right_pos) * Box(wall, right_edge.length*0.4, wall, align=align('-c-'))
+
+    # Add left notch
+    left_edge = bottom_face.edges().sort_by(Axis.X)[-1]
+    left_pos = left_edge.center()
+    part += Pos(-wall-eta,0,0) * Pos(left_pos) * Box(wall, left_edge.length*0.4, wall, align=align('+c-'))
 
     # Add ring-shaped notch around cup hole on bottom
     ring_pos = Pos(hole_face.center())
