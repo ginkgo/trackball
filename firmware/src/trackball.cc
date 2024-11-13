@@ -60,21 +60,21 @@ extern "C" {
 #define CONFIG_OFFSET_IN_FLASH (PRESUMED_FLASH_SIZE - FLASH_SECTOR_SIZE)
 #define FLASH_CONFIG_IN_MEMORY (((uint8_t*) XIP_BASE) + CONFIG_OFFSET_IN_FLASH)
 
-uint button_pins[NBUTTONS] = { 10,11,12,13 };
+uint button_pins[NBUTTONS] = { 0, 14, 1, 15};
 
 #define SENSOR0_PIO pio0
 #define SENSOR0_SM 0
-#define SENSOR0_SCK 2
-#define SENSOR0_MOSI 3
-#define SENSOR0_MISO 4
-#define SENSOR0_NCS 5
+#define SENSOR0_SCK 13
+#define SENSOR0_MOSI 12
+#define SENSOR0_MISO 11
+#define SENSOR0_NCS 10
 
 #define SENSOR1_PIO pio1
 #define SENSOR1_SM 1
-#define SENSOR1_SCK 6
-#define SENSOR1_MOSI 7
-#define SENSOR1_MISO 8
-#define SENSOR1_NCS 9
+#define SENSOR1_SCK 5
+#define SENSOR1_MOSI 4
+#define SENSOR1_MISO 3
+#define SENSOR1_NCS 2
 
 PMW3360_pair sensors(
 	{{SENSOR0_PIO, SENSOR0_SM}, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS},

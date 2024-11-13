@@ -7,7 +7,7 @@ Add license details
 Add requirements.txt
 Make options configurable from commandline args
 
-
+Switch to ocp_viewer for update_watcher.py
 
 magnetic cover
 magnetically attached wrist-rest
