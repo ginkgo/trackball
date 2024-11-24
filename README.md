@@ -85,3 +85,10 @@ I've used jfedor2's mouse switch PCBs since I already had them lying around, but
 This would need slight changes to the model.
 
 Using PIO it should be possible to access both sensors in perfect lock-step by having them share a single SCLK, NCS, and MOSI pin and having two separate MISO pins that are read at once.
+
+## License
+
+The 3d-printable parts as well as the python code to generate the parts is copyright 2024 Thomas Weber and licensed under terms the MIT license.
+
+The firmware is copyright 2024 Thomas Weber, copyright 2021 Jacek Fedrynski (jfedor2), and copyright 2019 Ha Thach (tinyusb.org) and licensed under the terms of the MIT license.
+There is also a piece of code for the SPI PIO copyright 2020 of the Raspberry Pi that's licensed under the terms of the BSD-3-Clause license.
