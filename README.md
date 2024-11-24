@@ -16,6 +16,8 @@ Instead of a [RP2040+PMW3360](https://github.com/jfedor2/rp2040-pmw3360) board I
 
 I redesigned the entire enclosure from the ground up in build123d. The nice thing about this is that it should be possible to parameterize the generated model (for instance to use a 55mm trackball instead of a 57.2mm billiards ball or to change the type of bearing used).
 
+The button assembly is quite different and feels a lot better in my opinion.
+
 The sensors are arranged at a 45-degree angle to move them as low as possible and keep them out of the way of the button assembly.
 This means when from the sensors, the main axis movements need to be reconstructed from values of both sensors.
 
@@ -48,8 +50,6 @@ BALL = 57.2
 suspension_type = SuspensionType.BALL_TRANSFER_UNIT
 cable_mount_type = CableMountType.USBC_PLUG
 ```
-
-![The model](imgs/img2.png)
 
 ## Building the firmware
 
