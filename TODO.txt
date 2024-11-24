@@ -4,7 +4,6 @@ Clean up firmware configuration
 use build123d assembly to put everything together
 split bowl part from top  and add extra attachment points to bottom
 Add README
-Add license details
 Add requirements.txt
 Make options configurable from commandline args
 

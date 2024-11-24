@@ -84,6 +84,10 @@ The firmware could need quite a bit of cleanup.
 I've used jfedor2's mouse switch PCBs since I already had them lying around, but I think for someone making their own trackball it would make more sense to use some of the very cheaply available G304/G305 mouse switch kits (like [this](https://www.aliexpress.com/item/1005006636817494.html) one) instead. These come with switches and allow hot swap.
 This would need slight changes to the model.
 
+Similarly it might be possible to save on soldering a breakout USB cable and USB-C jack if we could instead use another smaller RP2040 board that already comes with a USB-C jack.
+
+I don't yet know how durable the 3d-printed PLA springs holding the buttons in place will be (I guess it's easy to just reprint them if they break) but if this turns out to be a common point of failure it might be possible to replace them with a strip of steel.
+
 Using PIO it should be possible to access both sensors in perfect lock-step by having them share a single SCLK, NCS, and MOSI pin and having two separate MISO pins that are read at once.
 
 ## License
