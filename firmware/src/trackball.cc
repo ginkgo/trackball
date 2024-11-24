@@ -64,17 +64,17 @@ uint button_pins[NBUTTONS] = { 0, 14, 1, 15};
 
 #define SENSOR0_PIO pio0
 #define SENSOR0_SM 0
-#define SENSOR0_SCK 13
-#define SENSOR0_MOSI 12
-#define SENSOR0_MISO 11
 #define SENSOR0_NCS 10
+#define SENSOR0_MISO 11
+#define SENSOR0_MOSI 12
+#define SENSOR0_SCK 13
 
 #define SENSOR1_PIO pio1
 #define SENSOR1_SM 1
-#define SENSOR1_SCK 5
-#define SENSOR1_MOSI 4
-#define SENSOR1_MISO 3
 #define SENSOR1_NCS 2
+#define SENSOR1_MISO 3
+#define SENSOR1_MOSI 4
+#define SENSOR1_SCK 5
 
 PMW3360_pair sensors(
 	{{SENSOR0_PIO, SENSOR0_SM}, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS},
@@ -258,24 +258,24 @@ config_t config = {
 		{ SensorFunction::VERTICAL_SCROLL, SensorFunction::NO_FUNCTION },
 	},
 	.sensor_cpi = {
-		800 / 100,
-		800 / 100,
+		1000 / 100,
+		1000 / 100,
 	},
 	.sensor_shifted_cpi = {
-		800 / 100,
-		800 / 100,
+		1000 / 100,
+		1000 / 100,
 	},
 	.button_function = {
 		ButtonFunction::BUTTON1,
-		ButtonFunction::BUTTON1,
 		ButtonFunction::BUTTON2,
 		ButtonFunction::BUTTON3,
+		ButtonFunction::BUTTON4,
 	},
 	.button_shifted_function = {
 		ButtonFunction::BUTTON1,
-		ButtonFunction::BUTTON1,
 		ButtonFunction::BUTTON2,
 		ButtonFunction::BUTTON3,
+		ButtonFunction::BUTTON4,
 	},
 	.crc32 = 0,
 };
@@ -439,7 +439,7 @@ bool hid_task() {
 
 	sensors.update();
 
-	int16_t movement_x =		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2;
+	int16_t movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2;
 	int16_t movement_y = (int16_t)((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
 	int16_t movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
 

@@ -14,6 +14,6 @@ pico_generate_pio_header(trackball ${CMAKE_CURRENT_LIST_DIR}/src/spi.pio)
 
 target_include_directories(trackball PRIVATE src)
 
-target_link_libraries(trackball pico_stdlib hardware_spi hardware_flash hardware_pio tinyusb_device tinyusb_board)
+target_link_libraries(trackball pico_stdlib hardware_flash hardware_pio tinyusb_device tinyusb_board)
 
 pico_add_extra_outputs(trackball)

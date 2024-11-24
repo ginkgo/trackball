@@ -1,8 +1,6 @@
 #ifndef _PMW3360_H_
 #define _PMW3360_H_
 
-#include <hardware/spi.h>
-
 extern "C" {
 #include "pio_spi.h"
 }
@@ -20,16 +18,14 @@ public:
     PMW3360_pair(pmw3360_config config1, pmw3360_config config2) {
 		sensors[0] = config1;
 		sensors[1] = config2;
-		dead_sensor_frames = 0;
 	}
-	
+
     void init();
     void set_cpi(unsigned int cpi);
     void update();
 
     int16_t movement[2][2];
     bool is_on_surface;
-	int16_t dead_sensor_frames;
 
 private:
 	pmw3360_config sensors[2];
