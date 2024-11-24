@@ -19,7 +19,7 @@ I redesigned the entire enclosure from the ground up in build123d. The nice thin
 The button assembly is quite different and feels a lot better in my opinion.
 
 The sensors are arranged at a 45-degree angle to move them as low as possible and keep them out of the way of the button assembly.
-This means when from the sensors, the main axis movements need to be reconstructed from values of both sensors.
+This means when reading from the sensors, some axis values (the X and Z axis) need to be reconstructed from a combination values of both sensors.
 
 This is done in firmware. The basic math isn't too complicated, but it meant that the time delay between reading both sensors should be minimal or else the time lag might show up as unintended twists around the Z axis.
 To improve this I interleaved the sensor access. I also switched from RP2040 HW SPI to PIO SPI which allowed for more flexible GPIO mapping.
