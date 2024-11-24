@@ -65,7 +65,7 @@ The trackball can be configured to either use ball transfer units (7.5mm [YK310 
 
 However I found it's most flexible to just adapt an enclosure for ball transfer units to bearing balls using a small 3d-printed adapter.
 
-![different ball transfer units and bearing ball adapters](imgs/img5.jpeg)
+![different ball transfer units and bearing ball adapters](img/img5.jpeg)
 
 You can find the pregenerated models for the adapter in the `stl` and `step` folders and the script to generate it in `adapter.py`.
 
