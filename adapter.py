@@ -1,14 +1,17 @@
 from build123d import *
 import sys
 
-# This generates an adapter from a top designed for YK310 ball transfer units
-# to a regular bearing ball suspensions
+# This generates an adapter from an enclosure designed for YK310 ball transfer units
+# to a regular bearing ball suspensions. This is useful for evaluating the different bearing options.
 
 # Bearing diameter
 bearing = 2.5
 
+# These two settings theoretically allow you to place a smaller ball in a trackball designed for a larger one
+# Unfortunately I found that even a 55mm trackball in a 57.2 bowl adds so much extra distance that you don't
+# get any sensor reading.
 original_ball = 57.2
-target_ball = 55
+target_ball = original_ball
 
 assert(original_ball >= target_ball)
 
