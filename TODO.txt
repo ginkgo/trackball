@@ -1,4 +1,5 @@
 Fuse the PIO
+Clean up firmware configuration
 
 use build123d assembly to put everything together
 split bowl part from top  and add extra attachment points to bottom
@@ -11,3 +12,4 @@ Switch to ocp_viewer for update_watcher.py
 
 magnetic cover
 magnetically attached wrist-rest
+sapphire/glass/CaF2 window to protect sensors from dust
