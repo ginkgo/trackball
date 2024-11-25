@@ -19,7 +19,7 @@ I redesigned the entire enclosure from the ground up in build123d. The nice thin
 The button assembly is quite different and feels a lot better in my opinion.
 
 The sensors are arranged at a 45-degree angle to move them as low as possible and keep them out of the way of the button assembly.
-This means when reading from the sensors, some axis values (the X and Z axis) need to be reconstructed from a combination values of both sensors.
+This means when reading from the sensors, some axis values (the X and Z axis) need to be reconstructed from a combination values from both sensors.
 
 This is done in firmware. The basic math isn't too complicated, but it meant that the time delay between reading both sensors should be minimal or else the time lag might show up as unintended twists around the Z axis.
 To improve this I interleaved the sensor access. I also switched from RP2040 HW SPI to PIO SPI which allowed for more flexible GPIO mapping.
@@ -92,7 +92,7 @@ Using PIO it should be possible to access both sensors in perfect lock-step by h
 
 ## License
 
-The 3d-printable parts as well as the python code to generate the parts is copyright 2024 Thomas Weber and licensed under terms the MIT license.
+The 3d-printable parts as well as the python code to generate thes is copyright 2024 Thomas Weber and licensed under terms the MIT license.
 
-The firmware is copyright 2024 Thomas Weber, copyright 2021 Jacek Fedrynski (jfedor2), and copyright 2019 Ha Thach (tinyusb.org) and licensed under the terms of the MIT license.
+The firmware is copyright 2024 Thomas Weber, copyright 2021 Jacek Fedoryński (jfedor2), and copyright 2019 Ha Thach (tinyusb.org) and licensed under the terms of the MIT license.
 There is also a piece of code for the SPI PIO copyright 2020 of the Raspberry Pi that's licensed under the terms of the BSD-3-Clause license.
