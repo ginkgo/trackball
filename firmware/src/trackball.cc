@@ -258,12 +258,12 @@ config_t config = {
 		{ SensorFunction::VERTICAL_SCROLL, SensorFunction::NO_FUNCTION },
 	},
 	.sensor_cpi = {
-		1000 / 100,
-		1000 / 100,
+		10000 / 100,
+		10000 / 100,
 	},
 	.sensor_shifted_cpi = {
-		1000 / 100,
-		1000 / 100,
+		10000 / 100,
+		10000 / 100,
 	},
 	.button_function = {
 		ButtonFunction::BUTTON1,
@@ -341,13 +341,13 @@ void handle_twist_to_scroll() {
 		not_scroll_mode = false;
 	}
 
-	if (fabs(running_avg_vscroll) < 0.1 / 16) {
-		scroll_mode = false;
-	}
+	/* if (fabs(running_avg_vscroll) < 0.1 / 16) { */
+	/* 	scroll_mode = false; */
+	/* } */
 
-	if (!scroll_mode && (running_avg_x * running_avg_x + running_avg_y * running_avg_y > 4.0 / (12 * 12))) {
-		not_scroll_mode = true;
-	}
+	/* if (!scroll_mode && (running_avg_x * running_avg_x + running_avg_y * running_avg_y > 4.0 / (12 * 12))) { */
+	/* 	not_scroll_mode = true; */
+	/* } */
 
 	if (!not_scroll_mode && running_avg_vscroll * running_avg_vscroll > 4.0 / (16 * 16)) {
 		scroll_mode = true;
@@ -439,23 +439,39 @@ bool hid_task() {
 
 	sensors.update();
 
-	int16_t movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2;
-	int16_t movement_y = (int16_t)((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
-	int16_t movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
+	double movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
+	double movement_y = ((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
+	double movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
 
-	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) / 4) {
+	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z)) {
 		movement_z = 0;
 	} else {
 		movement_x = 0;
 		movement_y = 0;
 	}
 
-	report.dx	  -= movement_x;
-	report.dy	  += movement_y;
-	report.vwheel += handle_scroll(0,0, movement_z, 1<<0, &running_avg_vscroll);
+	movement_x *= 0.1;
+	movement_y *= 0.1;
+	movement_z *= 0.1;
 
 	running_avg_x += 0.1 * movement_x / current_cpi[0];
 	running_avg_y += 0.1 * movement_y / current_cpi[0];
+
+	static double residual_x = 0;
+	static double residual_y = 0;
+	static double residual_z = 0;
+
+	movement_x += residual_x;
+	movement_y += residual_y;
+	movement_z += residual_z;
+
+	report.dx	  -= (int16_t)round(movement_x);
+	report.dy	  += (int16_t)round(movement_y);
+	report.vwheel += handle_scroll(0,0, (int16_t)round(movement_z), 1<<0, &running_avg_vscroll);
+
+	residual_x = movement_x - round(movement_x);
+	residual_y = movement_y - round(movement_y);
+	residual_z = movement_z - round(movement_z);
 
 	/* { */
 	/*	   for (int axis = 0; axis < 2; axis++) { */
@@ -575,7 +591,7 @@ int main() {
 
 		if (did_sensor_reading) {
 			count++;
-			sleep_us(100);
+			sleep_us(50);
 		}
 
 		if (count == 1000) {
