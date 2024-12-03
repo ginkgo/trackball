@@ -3,12 +3,18 @@ Clean up firmware configuration
 
 use build123d assembly to put everything together
 split bowl part from top  and add extra attachment points to bottom
-Add README
 Add requirements.txt
 Make options configurable from commandline args
 
-Switch to ocp_viewer for update_watcher.py
+strengthen strips in corners
+magnetically attached wrist-rest
+
+Change geometry so front buttons are less inclined
+Change sensor angles to lower ball further
+
+Use Prusa trick for bottom bore holes
 
 magnetic cover
-magnetically attached wrist-rest
 sapphire/glass/CaF2 window to protect sensors from dust
+
+Add support for rp2040 zero board

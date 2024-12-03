@@ -301,6 +301,7 @@ def mk_pipico(pos):
     return pos * part
 pipico = mk_pipico(Pos(0,45, -30))
 
+
 def mk_button(angle):
     global bottom
     rot = Rotation(0,0,angle)
@@ -340,6 +341,15 @@ def mk_button(angle):
     strip += Pos(0,rod_width+dy+rod_width/2, dz) * Rotation(0,90,0) * Cylinder(rod_width/2, strip_width)
     strip -= Pos(0,rod_width+dy+rod_width/2, dz) * Rotation(0,90,0) * Cylinder(rod_width/4, strip_width)
 
+    # Fillet strip attachment point
+    fillet_edge_positions = [
+        Vertex(0,rod_width+dy,dz + strip_thickness),
+        Vertex(0,rod_width+dy,dz ),
+        Vertex(0,rod_width, +strip_thickness),
+    ]
+    fillet_edges = [strip.edges().sort_by_distance(pos)[0] for pos in fillet_edge_positions]
+    strip = fillet(fillet_edges, wall)
+
     button += (strip_loc * Pos(0,-wall,-1) * Box(strip_width+2*wall, rod_width+wall, 100, align=align('c--'))) & mk_arc_shell(0,arc_radius)
     button -= strip_loc * Pos(0,0,-1) * Box(strip_width+0.2, rod_width+0.1, 4+0.1, align=align('c--'))
 
@@ -352,13 +362,8 @@ def mk_button(angle):
         button -= l * Rot(90,0,0) * M2x3
 
     bottom_face = strip.faces().sort_by(Axis.Z)[0]
-    bottom += extrude(offset(bottom_face, amount=wall), amount=-8)
-    bottom -= extrude(offset(bottom_face, amount=0.1), amount=-8)
-
-    # screw hole attaching strip to bottom
-    hole_pos = Pos(0,0,4) * Pos(bottom_face.edges().sort_by_distance((0,0,0))[-1].center())
-    strip  -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
-    bottom -= hole_pos * Rot(0,0,angle-45) * Rot(-90,0,0) * Pos(0,0,wall) * M3x4
+    bottom += extrude(offset(bottom_face, amount=wall), amount=-6)
+    bottom -= extrude(offset(bottom_face, amount=0.1), amount=-6)
 
     return button, strip
 buttons, strips = zip(*[mk_button(a) for a in range(0,360,90)])
