@@ -36,10 +36,17 @@ add_logo=False
 add_text=''
 
 class CableMountType(Enum):
+    # Simple hole in the back to lead cable connected to RaspPi Pico to
     HOLE = 1
+
+    # USB-C plug in back
     USBC_PLUG = 2
 
-cable_mount_type = CableMountType.USBC_PLUG
+    # Use a RP2040 Super-Mini board instead of pi pico and place it in back so
+    # the USB-C plug can be used directly
+    RP2040_SUPERMINI = 3
+
+cable_mount_type = CableMountType.RP2040_SUPERMINI
 
 # Parameters of trackball case arc
 arc_radius=300/2
@@ -239,10 +246,42 @@ def mk_bottom():
         hole_dist = 16.15
         top -= loc * Rot(90,0,0) * Pos( hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
         top -= loc * Rot(90,0,0) * Pos(-hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
+    elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
+        loc = Pos(bottom_pos) * Pos(0,wall+eta,0)
+        z_offset = 4
 
+        # Super-mini RP2040 dimensions
+        board_width = 18.0
+        board_length = 23.9
+        board_thickness = 1.0
+
+        usbc_protrusion = 0.85
+        usbc_width = 8.8
+
+        part += loc * Pos(-board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
+        part += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
+        part += loc * Pos(-9/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
+        part += loc * Pos( 9/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
+        part += loc * Box(8.5-eta, usbc_protrusion-eta, z_offset + board_thickness, align=align('c+-'))
+        part += loc * Pos(-board_width/2,0,0) * Box(1.5, 1, z_offset + board_thickness, align=align('+--'))
+        part += loc * Pos( board_width/2,0,0) * Box(1.5, 1, z_offset + board_thickness, align=align('---'))
+
+        part -= loc * Pos(0,0,z_offset-eta) * Box(board_width+2*eta, board_length+eta, board_thickness+2*eta, align=align('c--'))
+
+        #part += loc * Pos(0,0,z_offset) * Box(board_width, board_length, board_thickness, align=align('c--'))
+
+        usbc_sketch = Plane.XZ * fillet(Rectangle(8.7,3.2, align=align('cc')).vertices(), radius=1.5)
+        usbc_loc = loc * Pos(0,-0.85,z_offset + board_thickness+3.2/2)
+
+        top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
+        top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,1,0))
+        top -= usbc_loc * Box(8.7,10,10, align=align('c-+'))
+
+        #part += usbc_loc * extrude(usbc_sketch, amount=7.5, dir=(0,1,0))
+
+        None
     else:
         assert(False)
-
 
     return part
 bottom = mk_bottom()
@@ -299,7 +338,8 @@ def mk_pipico(pos):
     bottom -= [pos * p * Cylinder(0.9,3, align=align('cc+')) for p in hole_positions]
 
     return pos * part
-pipico = mk_pipico(Pos(0,45, -30))
+if cable_mount_type != CableMountType.RP2040_SUPERMINI:
+    pipico = mk_pipico(Pos(0,45, -30))
 
 
 def mk_button(angle):
@@ -400,8 +440,10 @@ result = {
     'bottom': bottom,
     'sensor_pcb1': sensor_pcb1,
     'sensor_pcb2': sensor_pcb2,
-    'pipico': pipico,
 }
+
+if cable_mount_type != CableMountType.RP2040_SUPERMINI:
+    result['pipico'] = pipico
 
 for i,b in enumerate(buttons):
     result[f'button{i}'] = b
