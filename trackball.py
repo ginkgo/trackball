@@ -55,6 +55,7 @@ arc_location=(0,-20,-arc_radius)
 # Bore holes for screws
 M3x4 = CounterBoreHole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
 M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
+M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
 
 eta = 0.1 # General tolerance
 
@@ -247,7 +248,6 @@ def mk_bottom():
         top -= loc * Rot(90,0,0) * Pos( hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
         top -= loc * Rot(90,0,0) * Pos(-hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
     elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
-        loc = Pos(bottom_pos) * Pos(0,wall+eta,0)
         z_offset = 4
 
         # Super-mini RP2040 dimensions
@@ -257,25 +257,34 @@ def mk_bottom():
 
         usbc_protrusion = 0.85
         usbc_width = 8.8
+        usbc_thickness = 3.4
+
+        loc = Pos(bottom_pos) * Pos(0,wall+eta,0)
 
         part += loc * Pos(-board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
         part += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
-        part += loc * Pos(-9/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
-        part += loc * Pos( 9/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
-        part += loc * Box(8.5-eta, usbc_protrusion-eta, z_offset + board_thickness, align=align('c+-'))
-        part += loc * Pos(-board_width/2,0,0) * Box(1.5, 1, z_offset + board_thickness, align=align('+--'))
-        part += loc * Pos( board_width/2,0,0) * Box(1.5, 1, z_offset + board_thickness, align=align('---'))
+        part += loc * Pos(-7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
+        part += loc * Pos( 7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
+        part += loc * Box(usbc_width - eta, usbc_protrusion-eta, z_offset + board_thickness - eta, align=align('c+-'))
+
+
+        for xpos in [-(board_width/2 + 2), +(board_width/2 + 2)]:
+            part += Pos(bottom_pos) * Pos(xpos,wall+eta,0) * Box(4,4,z_offset+board_thickness+usbc_thickness/2+3, align=align('c--'))
+            screw = Pos(bottom_pos) * Pos(xpos,0,z_offset+board_thickness+usbc_thickness/2) * Rot(90,0,0) * M2x4
+            top  -= screw
+            part -= screw
 
         part -= loc * Pos(0,0,z_offset-eta) * Box(board_width+2*eta, board_length+eta, board_thickness+2*eta, align=align('c--'))
 
         #part += loc * Pos(0,0,z_offset) * Box(board_width, board_length, board_thickness, align=align('c--'))
 
-        usbc_sketch = Plane.XZ * fillet(Rectangle(8.7,3.2, align=align('cc')).vertices(), radius=1.5)
-        usbc_loc = loc * Pos(0,-0.85,z_offset + board_thickness+3.2/2)
+        usbc_sketch = Plane.XZ * fillet(Rectangle(usbc_width+eta*2,usbc_thickness+eta*2, align=align('cc')).vertices(), radius=1.5)
+        usbc_loc = loc * Pos(0,-usbc_protrusion,z_offset + board_thickness+usbc_thickness/2)
 
         top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
         top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,1,0))
-        top -= usbc_loc * Box(8.7,10,10, align=align('c-+'))
+        top -= usbc_loc * Box(usbc_width,10,10, align=align('c-+'))
+        top += loc * Pos(0,-eta,z_offset+board_thickness+usbc_thickness+eta) * Box(3,1,1, align=align('c--'))
 
         #part += usbc_loc * extrude(usbc_sketch, amount=7.5, dir=(0,1,0))
 
