@@ -32,6 +32,8 @@ btu_L  = 4
 btu_L1 = 1.1
 btu_H  = 1
 
+print_resolution = 0.1
+
 add_logo=False
 add_text=''
 
@@ -52,18 +54,29 @@ cable_mount_type = CableMountType.RP2040_SUPERMINI
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
 
-# Bore holes for screws
-M3x4 = CounterBoreHole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
-M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
-M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
-
-eta = 0.1 # General tolerance
-
 def align(xyz):
     d = {'c': Align.CENTER,
          '-': Align.MIN,
          '+': Align.MAX}
     return [d[c] for c in xyz]
+
+def prusa_trick_borehole(radius, depth, counter_bore_radius, counter_bore_depth):
+    loc = Pos(0,0,1)
+
+    part = Cylinder(radius, counter_bore_depth + depth + 1, align=align('cc+'))
+    part += Cylinder(counter_bore_radius, counter_bore_depth + 1, align=align('cc+'))
+    part += (Box(2*radius, 2*counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')) &
+             Cylinder(counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')))
+    part += Box(2*radius, 2*radius, counter_bore_depth + 1 + 2*print_resolution, align=align('cc+'))
+
+    return loc * part
+
+# Bore holes for screws
+M3x4 = prusa_trick_borehole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
+M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
+M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
+
+eta = 0.1 # General tolerance
 
 def mk_arc_shell(r1, r2):
     loc = Location(arc_location)
