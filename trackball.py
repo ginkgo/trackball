@@ -50,6 +50,15 @@ class CableMountType(Enum):
 
 cable_mount_type = CableMountType.RP2040_SUPERMINI
 
+class SwitchPCBType(Enum):
+    # Jacek Fedoryński's key switch PCB
+    JFEDOR2 = 1
+
+    # G304/G305 replacement key switch PCB
+    G304 = 2
+
+switch_pcb_type = SwitchPCBType.G304
+
 # Parameters of trackball case arc
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
@@ -63,7 +72,7 @@ def align(xyz):
 def prusa_trick_borehole(radius, depth, counter_bore_radius, counter_bore_depth):
     loc = Pos(0,0,1)
 
-    part = Cylinder(radius, counter_bore_depth + depth + 1, align=align('cc+'))
+    part = Cylinder(radius, counter_bore_depth + depth, align=align('cc+'))
     part += Cylinder(counter_bore_radius, counter_bore_depth + 1, align=align('cc+'))
     part += (Box(2*radius, 2*counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')) &
              Cylinder(counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')))
@@ -430,23 +439,78 @@ def mk_button(angle):
     return button, strip
 buttons, strips = zip(*[mk_button(a) for a in range(0,360,90)])
 
-def mk_button_pcb(pos=Pos(0,0,0), rot=Rotation(0,0,0)):
+def mk_jfedor2_keyswitch_pcb(pos, rot):
     global bottom
 
+    # Base board
     part = Box(8,30,1.4, align=align('cc-'))
+
+    # Keyswitch
     part += Pos(0,2,1.4) * Box(5.8,12.8,6.5, align=align('cc-'))
     part += Pos(0,0,1.4+6.5) * Box(2.9,1.2,1, align=align('cc-'))
 
+    # Screw holes
     part -= Pos(0,-12,0) * Cylinder(1,3)
     part -= Pos(0,+12,0) * Cylinder(1,3)
 
+    # Find keyswitch contact position (it's the center of the top-most face)
     top_loc = part.faces().sort_by(Axis.Z)[-1].center()
-
     loc = pos * Pos(-top_loc) * rot
-    for p in [Pos(0,-12,-0.1),
-              Pos(0,+12,-0.1)]:
+
+    # Add screw posts to bottom part
+    for p in [Pos(0,-12,-eta), Pos(0,+12,-eta)]:
         bottom += (loc * p * Cylinder(3, 30, align=align('cc+'))) & bounding_box(top)
         bottom -= (loc * p * Cylinder(0.9, 3.1, align=align('cc+')))
+
+    return loc * part
+
+def plot2d(start, offsets):
+    points = [Vector(start)]
+    for o in offsets:
+        np = o + points[-1]
+        points.append(np)
+
+    points.append(points[0]) # Close
+
+    return Polyline(points)
+
+def mk_g304_keyswitch_pcb(pos, rot, mirror_sketch):
+    global bottom
+    pcb_thickness = 0.75
+
+    # Base board
+    X = Vector(1,0)
+    Y = Vector(0,1)
+    start = (-5.65, -10.5)
+    sketch = plot2d(start, [5.5*X, -5*Y, 5.4*X, 5*Y, -2.1*X, 21*Y, -8.8*X, -4.9*Y, 2.5*X, -11.2*Y, -2.5*X])
+
+    if mirror_sketch:
+        sketch = mirror(sketch, Plane.YZ)
+
+    part = extrude(make_face(sketch), pcb_thickness, dir=(0,0,1))
+
+    part += Pos(0,-4.2) * Cylinder(0.9, 2.75, align=align('cc+'))
+    part += Pos(0,   0) * Cylinder(0.9, 2.75, align=align('cc+'))
+    part += Pos(0, 4.2) * Cylinder(0.9, 2.75, align=align('cc+'))
+
+    # Keyswitch
+    switch_length=12.8
+    switch_width=5.7
+    switch_height=6.5
+    part += Pos(0,0,pcb_thickness) * Box(switch_width,switch_length,switch_height, align=align('cc-'))
+    part += Pos(0,2,pcb_thickness+switch_height) * Box(2.9,1.2,1, align=align('cc-'))
+
+    # Find keyswitch contact position (it's the center of the top-most face)
+    top_loc = part.faces().sort_by(Axis.Z)[-1].center()
+    loc = pos * rot * Pos(-top_loc)
+
+    # Screw holes
+    hole_positions = [Pos(0,-8.6), Pos(0,8.6)]
+    for hp in hole_positions:
+        part -= hp * Cylinder(1.6/2,3)
+
+        bottom += (loc * hp * Cylinder(  2.5,  30, align=align('cc+'))) & bounding_box(top)
+        bottom += (loc * hp * Cylinder(1.6/2, 4.1, align=align('cc+')))
 
     return loc * part
 
@@ -454,7 +518,12 @@ button_pcbs = []
 for i,b in enumerate(strips):
     p = b.faces().filter_by(Axis.Z).sort_by_distance((0,0,-ball/2))[0].center()
     rot = Rotation(0,0,90) if (i not in [1,2]) else Rotation(0,0,-90)
-    button_pcbs.append(mk_button_pcb(pos=Pos(p), rot=rot))
+
+    if switch_pcb_type == SwitchPCBType.JFEDOR2:
+        pcb = mk_jfedor2_keyswitch_pcb(Pos(p), rot)
+    elif switch_pcb_type == SwitchPCBType.G304:
+        pcb = mk_g304_keyswitch_pcb(Pos(p), rot, mirror_sketch=(i in [2,3]))
+    button_pcbs.append(pcb)
 
 result = {
     'ball': trackball,

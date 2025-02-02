@@ -24,7 +24,7 @@ This means when reading from the sensors, some axis values (the X and Z axis) ne
 This is done in firmware. The basic math isn't too complicated, but it meant that the time delay between reading both sensors should be minimal or else the time lag might show up as unintended twists around the Z axis.
 To improve this I interleaved the sensor access. I also switched from RP2040 HW SPI to PIO SPI which allowed for more flexible GPIO mapping.
 
-## Configuring and renerating the models
+## Configuring and generating the models
 
 ![the models](img/img2.png)
 
@@ -80,6 +80,7 @@ I'm planning to make a wrist-rest that attaches using neodymium magnets in the e
 Similarly I'd like to make a magnetically attached top cover for easy transport.
 
 The firmware could need quite a bit of cleanup.
+Alternatively adding support for this trackball in QMK might also be an option once things stabilize a bit.
 
 I've used jfedor2's mouse switch PCBs since I already had them lying around, but I think for someone making their own trackball it would make more sense to use some of the very cheaply available G304/G305 mouse switch kits (like [this](https://www.aliexpress.com/item/1005006636817494.html) one) instead. These come with switches and allow hot swap.
 This would need slight changes to the model.

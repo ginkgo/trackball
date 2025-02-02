@@ -14,7 +14,6 @@ Change sensor angles to lower ball further
 
 Move USB-C mount pcb to bottom part (and reinforce)
 Add pull-out holes for BTUs
-Use Prusa trick for bottom bore holes
 
 magnetic cover
 sapphire/glass/CaF2 window to protect sensors from dust
