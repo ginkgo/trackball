@@ -510,7 +510,7 @@ def mk_g304_keyswitch_pcb(pos, rot, mirror_sketch):
         part -= hp * Cylinder(1.6/2,3)
 
         bottom += (loc * hp * Cylinder(  2.5,  30, align=align('cc+'))) & bounding_box(top)
-        bottom += (loc * hp * Cylinder(1.6/2, 4.1, align=align('cc+')))
+        bottom -= (loc * hp * Cylinder(1.6/2, 4.1, align=align('cc+')))
 
     return loc * part
 
