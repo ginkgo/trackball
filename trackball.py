@@ -332,10 +332,10 @@ def mk_sensor_pcb(loc):
                        (+2,0,-4),
                        (-2,0,-4),
                        (-2,0,strut-4)])
-    bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
+    bottom += [extrude(loc * l * make_face(sketch), target=bottom, until=Until.NEXT, dir=(0,0,-1)) for l in hole_locations]
 
     sketch = Pos(0,0,-4) * Circle(radius=2)
-    bottom += [extrude(loc * l * make_face(sketch), target=bottom, dir=(0,0,-1)) for l in hole_locations]
+    bottom += [extrude(loc * l * make_face(sketch), target=bottom, until=Until.NEXT, dir=(0,0,-1)) for l in hole_locations]
 
     bottom += [loc * l * Cylinder(2.1,4, align=align('cc+')) for l in hole_locations]
     bottom -= [loc * l * Cylinder(0.9,2, align=align('cc+')) for l in hole_locations]
@@ -393,7 +393,7 @@ def mk_button(angle):
     rod_width = 5
 
     strip_axis = (-Axis.Z).located(Rotation(0,0,angle-45) * Pos(0,ball/2+9,0))
-    strip_pos = mk_arc_shell(0,arc_radius).find_intersection(strip_axis)[0][0]
+    strip_pos = mk_arc_shell(0,arc_radius).find_intersection_points(strip_axis)[0][0]
     strip_loc = Pos(0,0,-8) * Pos(*strip_pos) * Rotation(0,0,angle-45)
 
     dy = 17
