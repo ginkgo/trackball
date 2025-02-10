@@ -160,6 +160,9 @@ def mk_top():
             part -= loc * Cylinder(btu_D/2 + eta, 2* (btu_H + eta), align=align('ccc'))
             part -= loc * Cylinder(btu_D1/2 + eta, 2* (btu_H + btu_L), align=align('ccc'))
 
+            pullout = 2
+            part -= loc * Box(btu_D + pullout, pullout, 2* btu_H + pullout, align=align('ccc'))
+
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
 

@@ -19,8 +19,7 @@ if len(sys.argv) != 2:
     exit(0)
 
 module_name = sys.argv[1]
-print(f"Import module {module_name}")
-module = importlib.import_module(sys.argv[1])
+module = None
 
 watch_file = os.path.abspath(module_name + ".py")
 watch_dir = os.path.dirname(watch_file)
@@ -43,7 +42,11 @@ def update_handler(signum, frame):
     sys.stdout.flush()
 
     try:
-        importlib.reload(module)
+        if not module:
+            module = importlib.import_module(sys.argv[1])
+        else:
+            importlib.reload(module)
+
         ocp.show(*module.result.values(), names=list(module.result.keys()))
     except Exception as e:
         print()

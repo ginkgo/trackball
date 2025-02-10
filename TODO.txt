@@ -6,14 +6,12 @@ split bowl part from top  and add extra attachment points to bottom
 Add requirements.txt
 Make options configurable from commandline args
 
-strengthen strips in corners
 magnetically attached wrist-rest
 
 Change geometry so front buttons are less inclined
 Change sensor angles to lower ball further
 
 Move USB-C mount pcb to bottom part (and reinforce)
-Add pull-out holes for BTUs
 
 magnetic cover
 sapphire/glass/CaF2 window to protect sensors from dust
