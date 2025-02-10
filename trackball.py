@@ -84,6 +84,7 @@ def prusa_trick_borehole(radius, depth, counter_bore_radius, counter_bore_depth)
 M3x4 = prusa_trick_borehole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
 M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
 M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
+M2x6 = CounterBoreHole(radius=0.95, depth=7, counter_bore_radius=2.1, counter_bore_depth=0.7)
 
 eta = 0.1 # General tolerance
 
@@ -260,8 +261,8 @@ def mk_bottom():
     ]
     for pos in hole_positions:
         top  += (pos  * Pos(0,0,wall) * Cylinder(radius=2, height=100, align=align('cc-'))) & mk_arc_shell(0,arc_radius-wall)
-        part -= pos  * Rot(180,0,0) * M2x4
-        top  -= pos  * Rot(180,0,0) * M2x4
+        part -= pos  * Rot(180,0,0) * M2x6
+        top  -= pos  * Rot(180,0,0) * M2x6
 
     if cable_mount_type == CableMountType.HOLE:
         # Cut hole for USB cable in top
