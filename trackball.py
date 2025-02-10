@@ -160,8 +160,10 @@ def mk_top():
             part -= loc * Cylinder(btu_D/2 + eta, 2* (btu_H + eta), align=align('ccc'))
             part -= loc * Cylinder(btu_D1/2 + eta, 2* (btu_H + btu_L), align=align('ccc'))
 
-            pullout = 2
-            part -= loc * Box(btu_D + pullout, pullout, 2* btu_H + pullout, align=align('ccc'))
+            # pull-out slots
+            pullout_size = 2
+            pullout_depth = 1
+            part -= loc * Box(btu_D + pullout_size, pullout_size, 2* (btu_H + pullout_depth), align=align('ccc'))
 
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
@@ -216,12 +218,14 @@ def mk_bottom():
     # Add right notch
     right_edge = bottom_face.edges().sort_by(Axis.X)[0]
     right_pos = right_edge.center()
-    part += Pos(wall+eta,0,0) * Pos(right_pos) * Box(wall, right_edge.length*0.4, wall, align=align('-c-'))
+    part += Pos(wall+eta,-25,0) * Pos(right_pos) * Box(wall, 15, wall, align=align('-c-'))
+    part += Pos(wall+eta,+15,0) * Pos(right_pos) * Box(wall, 15, wall, align=align('-c-'))
 
     # Add left notch
     left_edge = bottom_face.edges().sort_by(Axis.X)[-1]
     left_pos = left_edge.center()
-    part += Pos(-wall-eta,0,0) * Pos(left_pos) * Box(wall, left_edge.length*0.4, wall, align=align('+c-'))
+    part += Pos(-wall-eta,-25,0) * Pos(left_pos) * Box(wall, 15, wall, align=align('+c-'))
+    part += Pos(-wall-eta,+15,0) * Pos(left_pos) * Box(wall, 15, wall, align=align('+c-'))
 
     # Add ring-shaped notch around cup hole on bottom
     ring_pos = Pos(hole_face.center())
@@ -235,7 +239,9 @@ def mk_bottom():
     top += ring_pos * Pos(0,bottom_hole_radius,0) * Box(wall*0.75,wall*2,wall, align=align('c--'))
 
     # Add screw holes
-    bottom_corners = bounding_box(part).faces().sort_by(Axis.Z)[0].vertices()
+    bottom_face = bounding_box(part).faces().sort_by(Axis.Z)[0]
+    bottom_height = bottom_face.vertices()[0].to_tuple()[2]
+    bottom_corners = bottom_face.vertices()
     hole_positions = [
         Pos( 4.5, 4.5)  * Pos(bottom_corners.sort_by(Axis.Y)[:2].sort_by(Axis.X)[0]),
         Pos(-4.5, 4.5)  * Pos(bottom_corners.sort_by(Axis.Y)[:2].sort_by(Axis.X)[1]),
@@ -247,6 +253,15 @@ def mk_bottom():
         top  += (pos  * Pos(0,0,wall) * Cylinder(radius=3, height=100, align=align('cc-'))) & mk_arc_shell(0,arc_radius-wall)
         part -= pos  * Rot(180,0,0) * M3x4
         top  -= pos  * Rot(180,0,0) * M3x4
+
+    hole_positions = [
+        Pos(-base_width/2 + 2.5, 0, bottom_height),
+        Pos( base_width/2 - 2.5, 0, bottom_height),
+    ]
+    for pos in hole_positions:
+        top  += (pos  * Pos(0,0,wall) * Cylinder(radius=2, height=100, align=align('cc-'))) & mk_arc_shell(0,arc_radius-wall)
+        part -= pos  * Rot(180,0,0) * M2x4
+        top  -= pos  * Rot(180,0,0) * M2x4
 
     if cable_mount_type == CableMountType.HOLE:
         # Cut hole for USB cable in top
