@@ -443,16 +443,17 @@ bool hid_task() {
 	double movement_y = ((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
 	double movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
 
-	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z)) {
+	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) * 0.5) {
 		movement_z = 0;
 	} else {
 		movement_x = 0;
 		movement_y = 0;
 	}
 
+
 	movement_x *= 0.1;
 	movement_y *= 0.1;
-	movement_z *= 0.1;
+	movement_z *= 0.2;
 
 	running_avg_x += 0.1 * movement_x / current_cpi[0];
 	running_avg_y += 0.1 * movement_y / current_cpi[0];
@@ -591,7 +592,6 @@ int main() {
 
 		if (did_sensor_reading) {
 			count++;
-			sleep_us(50);
 		}
 
 		if (count == 1000) {
