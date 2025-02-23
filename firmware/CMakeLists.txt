@@ -6,6 +6,16 @@ project(trackball)
 
 pico_sdk_init()
 
+option(BOARD "Select the type of board to target (RPI_PICO or RP2040_SUPERMINI)" "RPI_PICO")
+
+if (BOARD STREQUAL "RPI_PICO")
+  add_definitions(-DRPI_PICO=1)
+elseif(BOARD STREQUAL "RP2040_SUPERMINI")
+  add_definitions(-DRP2040_SUPERMINI=1)
+else()
+  message(FATAL_ERROR "Invalid option for BOARD: ${BOARD}")
+endif()
+
 add_compile_options(-Wall)
 
 add_executable(trackball src/trackball.cc src/pmw3360.cc src/srom.cc src/crc.cc src/pio_spi.c)

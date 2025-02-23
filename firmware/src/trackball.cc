@@ -60,21 +60,42 @@ extern "C" {
 #define CONFIG_OFFSET_IN_FLASH (PRESUMED_FLASH_SIZE - FLASH_SECTOR_SIZE)
 #define FLASH_CONFIG_IN_MEMORY (((uint8_t*) XIP_BASE) + CONFIG_OFFSET_IN_FLASH)
 
+#define SENSOR0_PIO pio0
+#define SENSOR1_PIO pio1
+#define SENSOR0_SM 0
+#define SENSOR1_SM 1
+
+#if RPI_PICO
 uint button_pins[NBUTTONS] = { 0, 14, 1, 15};
 
-#define SENSOR0_PIO pio0
-#define SENSOR0_SM 0
 #define SENSOR0_NCS 10
 #define SENSOR0_MISO 11
 #define SENSOR0_MOSI 12
 #define SENSOR0_SCK 13
 
-#define SENSOR1_PIO pio1
-#define SENSOR1_SM 1
 #define SENSOR1_NCS 2
 #define SENSOR1_MISO 3
 #define SENSOR1_MOSI 4
 #define SENSOR1_SCK 5
+#elif RP2040_SUPERMINI
+uint button_pins[NBUTTONS] = { 6, 3, 7, 4};
+// GPIO pins to pull down so we can use them as extra GND pins
+#define NGND_PINS 2
+uint gnd_pins[NGND_PINS] = {2, 5};
+
+#define SENSOR0_NCS 13
+#define SENSOR0_MISO 12
+#define SENSOR0_MOSI 11
+#define SENSOR0_SCK 10
+
+#define SENSOR1_NCS 29
+#define SENSOR1_MISO 28
+#define SENSOR1_MOSI 27
+#define SENSOR1_SCK 26
+
+#else
+#error Unknown board configuration.
+#endif
 
 PMW3360_pair sensors(
 	{{SENSOR0_PIO, SENSOR0_SM}, SENSOR0_MISO, SENSOR0_MOSI, SENSOR0_SCK, SENSOR0_NCS},
@@ -530,6 +551,16 @@ void pin_init(uint pin) {
 }
 
 void pins_init() {
+
+#if RP2040_SUPERMINI
+	for (int i = 0; i < NGND_PINS; ++i) {
+		// Pull to GND
+		gpio_init(gnd_pins[i]);
+		gpio_set_dir(gnd_pins[i], GPIO_OUT);
+		gpio_put(gnd_pins[i], 0);
+	}
+#endif
+
 	for (int i = 0; i < NBUTTONS; i++) {
 		pin_init(button_pins[i]);
 	}
