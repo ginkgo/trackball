@@ -1,3 +1,8 @@
+Complete README.md
+Adjust screw-holes on the bottom sides to use M2(or maybe M3?) screws instead M1.6.
+Fix front-button angling issue
+
+
 Fuse the PIO
 Clean up firmware configuration
 

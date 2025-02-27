@@ -446,10 +446,9 @@ def mk_button(angle):
     strip = (strip_loc * strip) & mk_arc_shell(0,arc_radius) & bounding_box(top)
 
     # screw holes attaching buttons to strip
-    for l in [strip_loc * Pos(-3,-wall,1),
-              strip_loc * Pos( 3,-wall,1)]:
-        strip  -= l * Rot(90,0,0) * M2x3
-        button -= l * Rot(90,0,0) * M2x3
+    screw_loc = strip_loc * Pos(0,-wall,1)
+    strip  -= screw_loc * Rot(90,0,0) * M2x3
+    button -= screw_loc * Rot(90,0,0) * M2x3
 
     bottom_face = strip.faces().sort_by(Axis.Z)[0]
     bottom += extrude(offset(bottom_face, amount=wall), amount=-6)
