@@ -8,6 +8,7 @@ import os
 import signal
 import traceback
 import hashlib
+import threading
 
 #import yacv_server as yacv
 import ocp_vscode as ocp
@@ -28,13 +29,19 @@ watch_file_md5 = ""
 
 ocp.set_colormap(ocp.ColorMap.golden_ratio())
 
+lock = threading.Lock()
 def update_handler(signum, frame):
     global module
     global watch_file_md5
+    global lock
+
+    if not lock.acquire(blocking=False):
+        return
 
     md5 = hashlib.md5(open(watch_file, 'rb').read()).hexdigest()
 
     if md5 == watch_file_md5:
+        lock.release()
         return
     watch_file_md5 = md5
 
@@ -58,6 +65,8 @@ def update_handler(signum, frame):
         print()
 
     print('  done (http://127.0.0.1:3939/viewer)')
+
+    lock.release()
 
 update_handler(0,0)
 
