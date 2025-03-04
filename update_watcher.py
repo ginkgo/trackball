@@ -10,7 +10,6 @@ import traceback
 import hashlib
 import threading
 
-#import yacv_server as yacv
 import ocp_vscode as ocp
 
 ocp.set_port(3939)
@@ -52,6 +51,7 @@ def update_handler(signum, frame):
         if not module:
             module = importlib.import_module(sys.argv[1])
         else:
+            importlib.invalidate_caches()
             importlib.reload(module)
 
         ocp.show(*module.result.values(), names=list(module.result.keys()))
