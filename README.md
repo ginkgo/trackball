@@ -103,6 +103,8 @@ Apart from the 3d-printed parts you need the following:
     `switch_pcb_type = SwitchPCBType.JFEDOR2`
   * Buy 2 pairs of [G304/G305 button replacement PCBs](https://vi.aliexpress.com/item/1005004663221786.html).
     `switch_pcb_type = SwitchPCBType.G304`
+* 1 57.2mm billiards ball
+  * Or a 55mm trackball if you adjust the ball size in the script
 * 3 YK310 type BTUs (or steel/ruby/ceramic bearings with an adapter)
 * Machine screws
   * M3x4 (For bottom screws)
