@@ -72,13 +72,13 @@ This generates a `trackball.uf2` which you can upload to your board.
 These are the parts you need to print:
 
 * `bottom`
-  The base plate for the entire assembly. Doesn't need supports.
+  * The base plate for the entire assembly. Doesn't need supports.
 * `top`
-  The top cover of the trackball. Needs supports.
+  * The top cover of the trackball. Needs supports.
 * `button0`, `button1`, `button2`, `button3`
-  The top buttons. Each one has a different curvature so they're not interchangeable. Need supports.
+  * The top buttons. Each one has a different curvature so they're not interchangeable. Need supports.
 * `strip0`
-  The flexible springs to hold the button in place. You need 4 of these but they're all identical. Doesn't need supports when printed on their side.
+  * The flexible springs to hold the button in place. You need 4 of these but they're all identical. Doesn't need supports when printed on their side.
 
 I printed everything with PLA and a layer size of 0.1mm.
 
@@ -137,6 +137,8 @@ This should hopefully be relatively straightforward.
 * Screw flexible strips to the button parts and place the assembled buttons over the switches.
 * Place the top part over everything and secure it with the screws on the bottom (and back).
 * Push in your bearing of choice.
+
+You can open all the model files in a 3d editor like blender to see where everything goes.
 
 The bit that's probably easiest to mix up is which button goes where. The best way to tell which is which is to look at their curvature. Front buttons have a much steeper angle and the lowest part protudes below the attachment point for the flexible strip.
 You should also be able to tell by the layer lines from the 3d print.
