@@ -642,7 +642,7 @@ int main() {
 // Invoked when device is mounted
 void tud_mount_cb() {
 	// reset hi-res scroll for when we reboot from Windows into Linux
-	resolution_multiplier = 0;
+	//resolution_multiplier = 0;
 }
 
 // Invoked when received GET DEVICE DESCRIPTOR
