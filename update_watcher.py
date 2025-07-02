@@ -3,12 +3,12 @@
 import importlib
 import sys
 import time
-import fcntl
 import os
-import signal
 import traceback
 import hashlib
 import threading
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 import ocp_vscode as ocp
 
@@ -22,14 +22,13 @@ module_name = sys.argv[1]
 module = None
 
 watch_file = os.path.abspath(module_name + ".py")
-watch_dir = os.path.dirname(watch_file)
 
 watch_file_md5 = ""
-
 ocp.set_colormap(ocp.ColorMap.golden_ratio())
-
+ocp.set_defaults(reset_camera=ocp.Camera.KEEP)
 lock = threading.Lock()
-def update_handler(signum, frame):
+
+def update_handler():
     global module
     global watch_file_md5
     global lock
@@ -37,17 +36,16 @@ def update_handler(signum, frame):
     if not lock.acquire(blocking=False):
         return
 
-    md5 = hashlib.md5(open(watch_file, 'rb').read()).hexdigest()
-
-    if md5 == watch_file_md5:
-        lock.release()
-        return
-    watch_file_md5 = md5
-
-    print(f"Reloading {watch_file}..  ", end='')
-    sys.stdout.flush()
-
     try:
+        md5 = hashlib.md5(open(watch_file, 'rb').read()).hexdigest()
+
+        if md5 == watch_file_md5:
+            return
+        watch_file_md5 = md5
+
+        print(f"Reloading {watch_file}..  ", end='')
+        sys.stdout.flush()
+
         if not module:
             module = importlib.import_module(sys.argv[1])
         else:
@@ -55,6 +53,9 @@ def update_handler(signum, frame):
             importlib.reload(module)
 
         ocp.show(*module.result.values(), names=list(module.result.keys()))
+
+        print('  done (http://127.0.0.1:3939/viewer)')
+
     except Exception as e:
         print()
         print("#" * 80)
@@ -63,18 +64,23 @@ def update_handler(signum, frame):
         print(traceback.format_exc())
         print("#" * 80)
         print()
+    finally:
+        lock.release()
 
-    print('  done (http://127.0.0.1:3939/viewer)')
+class ChangeHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if os.path.abspath(event.src_path) == watch_file:
+            update_handler()
 
-    lock.release()
+update_handler()  # Run once at start
 
-update_handler(0,0)
+observer = Observer()
+observer.schedule(ChangeHandler(), os.path.dirname(watch_file), recursive=False)
+observer.start()
 
-signal.signal(signal.SIGIO, update_handler)
-fd = os.open(watch_dir,  os.O_RDONLY)
-fcntl.fcntl(fd, fcntl.F_SETSIG, 0)
-fcntl.fcntl(fd, fcntl.F_NOTIFY,
-            fcntl.DN_MODIFY | fcntl.DN_CREATE | fcntl.DN_MULTISHOT)
-
-while True:
-    time.sleep(10000)
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    observer.stop()
+observer.join()
