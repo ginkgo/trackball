@@ -20,6 +20,19 @@ class SuspensionType(Enum):
 
 suspension_type = SuspensionType.BALL_TRANSFER_UNIT
 
+class CableMountType(Enum):
+    # Simple hole in the back to lead cable connected to RaspPi Pico to
+    HOLE = 1
+
+    # USB-C plug in back
+    USBC_PLUG = 2
+
+    # Use a RP2040 Super-Mini board instead of pi pico and place it in back so
+    # the USB-C plug can be used directly
+    RP2040_SUPERMINI = 3
+
+cable_mount_type = CableMountType.RP2040_SUPERMINI
+
 # Bearing diameter
 bearing = 2.5
 
@@ -70,10 +83,16 @@ else:
 
 
 angle = 18
-profile1 = Rotation(-angle, 0,0) * Pos(0,0,0) * Rectangle(90, 100)
-profile2 = Pos(0,0,-ball/2) * Pos(0,-5,0) * Rectangle(90,110)
+angle_r = angle*math.pi/180
+profile = Polyline([(0,-60,-ball/2),
+                    (0, 50,-ball/2),
+                    (0, 48, math.tan(angle_r) * -48),
+                    (0,-48, math.tan(angle_r) *  48),
+                    (0,-60,-ball/2+10),
+                    (0,-60,-ball/2),
+                    ])
 
-top = loft([profile1, profile2])
+top = extrude(make_face(profile), amount=90/2, dir=(1,0,0), both=True)
 top -= Rotation(0,0,math.pi) * Sphere(radius=bowl_radius)
 top -= Cylinder(radius=15,height=100)
 
@@ -93,8 +112,54 @@ if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
         pullout_size = 2
         pullout_depth = 1
         top -= loc * Box(btu_D + pullout_size, pullout_size, 2* (btu_H + pullout_depth), align=align('ccc'))
+else:
+    assert(False)
 
 bottom = extrude(base_plate,amount=wall)
+
+if cable_mount_type == CableMountType.RP2040_SUPERMINI:
+
+    back_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
+    bottom_pos = back_edge.center()
+    z_offset = 2
+
+    # Super-mini RP2040 dimensions
+    board_width = 18.0
+    board_length = 23.9
+    board_thickness = 1.0
+
+    usbc_protrusion = 0.85
+    usbc_width = 8.8
+    usbc_thickness = 3.4
+
+    loc = Pos(bottom_pos) * Pos(0,wall+eta,0)
+
+    bottom += loc * Pos(-board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
+    bottom += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
+    bottom += loc * Pos(-7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
+    bottom += loc * Pos( 7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
+    bottom += loc * Box(usbc_width - eta, usbc_protrusion-eta, z_offset + board_thickness - eta, align=align('c+-'))
+
+
+    for xpos in [-(board_width/2 + 2), +(board_width/2 + 2)]:
+        bottom += Pos(bottom_pos) * Pos(xpos,wall+eta,0) * Box(4,4,z_offset+board_thickness+usbc_thickness/2+3, align=align('c--'))
+        screw = Pos(bottom_pos) * Pos(xpos,0,z_offset+board_thickness+usbc_thickness/2) * Rot(90,0,0) * M2x4
+        top  -= screw
+        bottom -= screw
+
+    bottom -= loc * Pos(0,0,z_offset-eta) * Box(board_width+2*eta, board_length+eta, board_thickness+2*eta, align=align('c--'))
+
+    #bottom += loc * Pos(0,0,z_offset) * Box(board_width, board_length, board_thickness, align=align('c--'))
+
+    usbc_sketch = Plane.XZ * fillet(Rectangle(usbc_width+eta*2,usbc_thickness+eta*2, align=align('cc')).vertices(), radius=1.5)
+    usbc_loc = loc * Pos(0,-usbc_protrusion,z_offset + board_thickness+usbc_thickness/2)
+
+    top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
+    top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,1,0))
+    top -= usbc_loc * Box(usbc_width,10,10, align=align('c-+'))
+    top += loc * Pos(0,-eta,z_offset+board_thickness+usbc_thickness+eta) * Box(3,1,1, align=align('c--'))
+else:
+    assert(False)
 
 def mk_sensor_pcb(loc):
     global bottom, top
