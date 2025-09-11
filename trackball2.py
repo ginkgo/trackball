@@ -92,9 +92,24 @@ profile = Polyline([(0,-60,-ball/2),
                     (0,-60,-ball/2),
                     ])
 
-top = extrude(make_face(profile), amount=90/2, dir=(1,0,0), both=True)
+top = extrude(make_face(profile), amount=95/2, dir=(1,0,0), both=True)
 top -= Rotation(0,0,math.pi) * Sphere(radius=bowl_radius)
 top -= Cylinder(radius=15,height=100)
+
+chamfer_edges = [
+    top.edges().sort_by(Axis.Z)[-1],
+    top.edges().sort_by(Axis.X)[-4:].sort_by(Axis.Z)[-1],
+    top.edges().sort_by(Axis.X)[-4:].sort_by(Axis.Y)[-1],
+    top.edges().sort_by(Axis.X)[-4:].sort_by(Axis.Y)[0],
+    top.edges().sort_by(Axis.X)[-4:].sort_by(Axis.Y)[1],
+    top.edges().sort_by(Axis.X)[:3].sort_by(Axis.Z)[-1],
+    top.edges().sort_by(Axis.X)[:3].sort_by(Axis.Y)[-1],
+    top.edges().sort_by(Axis.X)[:5].sort_by(Axis.Y)[0],
+    top.edges().sort_by(Axis.X)[:5].sort_by(Axis.Y)[1],
+    top.edges().sort_by(Axis.Y)[-4:].sort_by(Axis.Z)[-1],
+    top.edges().sort_by_distance(Vertex(-1,0,0))[0],
+]
+top = chamfer(chamfer_edges, wall)
 
 base_plate = top.faces().sort_by(Axis.Z)[0]
 top = offset(top.solids()[0], amount=-wall, openings=base_plate)
