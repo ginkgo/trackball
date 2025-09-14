@@ -82,8 +82,8 @@ else:
     assert(False)
 
 
-angle = 18
-angle_r = angle*math.pi/180
+plate_angle = 18
+angle_r = plate_angle*math.pi/180
 profile = Polyline([(0,-60,-ball/2),
                     (0, 50,-ball/2),
                     (0, 48, math.tan(angle_r) * -48),
@@ -92,7 +92,7 @@ profile = Polyline([(0,-60,-ball/2),
                     (0,-60,-ball/2),
                     ])
 
-top = extrude(make_face(profile), amount=95/2, dir=(1,0,0), both=True)
+top = extrude(make_face(profile), amount=100/2, dir=(1,0,0), both=True)
 top -= Rotation(0,0,math.pi) * Sphere(radius=bowl_radius)
 top -= Cylinder(radius=15,height=100)
 
@@ -131,6 +131,30 @@ else:
     assert(False)
 
 bottom = extrude(base_plate,amount=wall)
+
+inner_radius = ball/2 + 3
+button_width = 48
+outer_radius = 15
+button_sketch = make_face([TangentArc([(0,inner_radius,0),
+                                                        (inner_radius,0,0)], tangent=(1,0,0)),
+                                            Polyline([(inner_radius, 0,0),
+                                                      (button_width, 0,0),
+                                                      (button_width, button_width-outer_radius, 0)]),
+                                            TangentArc([(button_width, button_width-outer_radius, 0),
+                                                        (button_width-outer_radius, button_width, 0)], tangent=(0,1,0)),
+                                            Polyline([(button_width-outer_radius, button_width, 0),
+                                                      (0, button_width, 0),
+                                                      (0, inner_radius, 0)])])
+
+button_sketch = offset(button_sketch, amount=-1.5)
+button_sketch = fillet(button_sketch.vertices(), 2)
+
+button_sketch = extrude(button_sketch, amount=1)
+
+button1 = Rotation(-plate_angle, 0, 0) * button_sketch
+button2 = Rotation(-plate_angle, 0, 90) * button_sketch
+button3 = Rotation(-plate_angle, 0, 180) * button_sketch
+button4 = Rotation(-plate_angle, 0, 270) * button_sketch
 
 if cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
@@ -217,6 +241,10 @@ result = {
     'sensor_pcb2': sensor_pcb2,
     'top': top,
     'bottom': bottom,
+    'button1': button1,
+    'button2': button2,
+    'button3': button3,
+    'button4': button4,
 }
 
 if __name__ == "__main__":
