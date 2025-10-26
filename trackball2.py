@@ -147,14 +147,53 @@ button_sketch = make_face([TangentArc([(0,inner_radius,0),
                                                       (0, inner_radius, 0)])])
 
 button_sketch = offset(button_sketch, amount=-1.5)
-button_sketch = fillet(button_sketch.vertices(), 2)
+#button_sketch = fillet(button_sketch.vertices(), 2)
 
-button_sketch = extrude(button_sketch, amount=1)
+# button_sketch = extrude(button_sketch, amount=1)
+# button1 = Rotation(-plate_angle, 0, 0) * button_sketch
 
-button1 = Rotation(-plate_angle, 0, 0) * button_sketch
-button2 = Rotation(-plate_angle, 0, 90) * button_sketch
-button3 = Rotation(-plate_angle, 0, 180) * button_sketch
-button4 = Rotation(-plate_angle, 0, 270) * button_sketch
+def add_button(loc):
+    global button_sketch
+    global top
+
+    top = loc.inverse() * top
+    top = Compound([top])
+    
+    top -= extrude(button_sketch, amount=-wall, taper=45)
+    top += extrude(offset(button_sketch, amount=-1), amount=-wall, taper=45)
+    top += Pos(button_sketch.center()) * Box(5,5,5, align=align('cc+'))
+    
+    #top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
+
+    height = 4
+    width = 2
+    bridge_face = make_face([Polyline([(-width/2, -width/2, 0),
+                                       (-width/2, -width/2, print_resolution),
+                                       ( width/2,  width/2, print_resolution),
+                                       ( width/2,  width/2, 0),
+                                       (-width/2, -width/2, 0)])])
+
+    for angle,extrude_dir,dist in [(10,( 1, 0,0), inner_radius + 6),
+                                   (13,(-1, 0,0), button_width - 5),
+                                   (77,( 0,-1,0), button_width - 5),
+                                   (80,( 0, 1,0), inner_radius + 6),]:
+        #angle = 10
+        post_pos = Rotation(0,0,angle) * Vertex(dist, 0, 0)
+        #extrude_dir = Rotation(0,0,0) * Vertex(1,0,0)
+        face = Pos(post_pos) * Pos(0,0,-height) * bridge_face
+        top += extrude(face, dir=extrude_dir, until=Until.NEXT, target=top)
+        top += Pos(post_pos) * Box(width,width,height, align=align('cc+'))
+    
+
+
+    #top = top.solid().fuse(top.solids()[1:])
+    
+    top = loc * top.solid()
+    #top = ShapeList([loc * s for s in top.solids()])
+
+for angle in [0,90,180,270]:
+#for angle in [0]:    
+    add_button(Rotation(-plate_angle, 0, angle))
 
 if cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
@@ -241,10 +280,6 @@ result = {
     'sensor_pcb2': sensor_pcb2,
     'top': top,
     'bottom': bottom,
-    'button1': button1,
-    'button2': button2,
-    'button3': button3,
-    'button4': button4,
 }
 
 if __name__ == "__main__":
