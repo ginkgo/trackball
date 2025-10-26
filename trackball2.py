@@ -175,6 +175,8 @@ def add_button(loc):
 
     for angle,extrude_dir,dist in [(10,( 1, 0,0), inner_radius + 6),
                                    (13,(-1, 0,0), button_width - 5),
+                                   (40,( 1, 0,0), button_width + 0),
+                                   (50,( 0, 1,0), button_width + 0),
                                    (77,( 0,-1,0), button_width - 5),
                                    (80,( 0, 1,0), inner_radius + 6),]:
         #angle = 10
