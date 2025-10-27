@@ -166,27 +166,25 @@ def add_button(loc):
     #top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
 
     height = 4
-    width = 2
-    bridge_face = make_face([Polyline([(-width/2, -width/2, 0),
-                                       (-width/2, -width/2, print_resolution),
-                                       ( width/2,  width/2, print_resolution),
-                                       ( width/2,  width/2, 0),
-                                       (-width/2, -width/2, 0)])])
-
-    for angle,extrude_dir,dist in [(10,( 1, 0,0), inner_radius + 6),
-                                   (13,(-1, 0,0), button_width - 5),
-                                   (40,( 1, 0,0), button_width + 0),
-                                   (50,( 0, 1,0), button_width + 0),
-                                   (77,( 0,-1,0), button_width - 5),
-                                   (80,( 0, 1,0), inner_radius + 6),]:
-        #angle = 10
-        post_pos = Rotation(0,0,angle) * Vertex(dist, 0, 0)
-        #extrude_dir = Rotation(0,0,0) * Vertex(1,0,0)
-        face = Pos(post_pos) * Pos(0,0,-height) * bridge_face
-        top += extrude(face, dir=extrude_dir, until=Until.NEXT, target=top)
-        top += Pos(post_pos) * Box(width,width,height, align=align('cc+'))
+    width = 4
     
+    bridge_face = make_face([Polyline([(-width/2, 0, 0),
+                                       (-width/2, 0, -2*print_resolution),
+                                       (-width/4, 0, -3*print_resolution),
+                                       ( width/4, 0, -3*print_resolution),
+                                       ( width/2, 0, -2*print_resolution),
+                                       ( width/2, 0, 0),
+                                       (-width/2, 0, 0)])])
 
+    for pos, angle in [(Pos(inner_radius + 6, 8, 0), -45),
+                       (Pos(8, inner_radius + 6, 0), -45),
+                       (Pos(button_width-19, inner_radius + 8, 0), 135),
+                       (Pos(inner_radius + 8, button_width-19, 0), 135),
+                       ]:
+        extrude_dir = Vector(0,1,0).rotate(Axis.Z, angle)
+        face = pos * Pos(0,0,-height) * Rotation(0,0,angle) * Pos(0,-width/2,0) * bridge_face
+        top += extrude(face, dir=extrude_dir, until=Until.NEXT, target=top)
+        top += pos * Rotation(0,0,angle) * Box(width,width,height, align=align('cc+'))
 
     #top = top.solid().fuse(top.solids()[1:])
     
