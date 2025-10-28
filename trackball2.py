@@ -275,7 +275,15 @@ if cable_mount_type == CableMountType.RP2040_SUPERMINI:
     bottom += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
     bottom += loc * Pos(-7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
     bottom += loc * Pos( 7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
-    bottom += loc * Box(usbc_width - eta, usbc_protrusion-eta, z_offset + board_thickness - eta, align=align('c+-'))
+    
+    bottom_notch_face = make_face([Polyline([(0,-wall-eta,0),
+                                             (0, wall,0),
+                                             (0, wall,z_offset+board_thickness-eta),
+                                             (0,-wall+usbc_protrusion,z_offset+board_thickness-eta),
+                                             (0,-wall,1),
+                                             (0,-wall-eta,0)])])
+    bottom += loc * extrude(bottom_notch_face, (usbc_width-eta)/2, both=True)
+    #bottom += loc * Box(usbc_width - eta, usbc_protrusion-eta + 1, z_offset + board_thickness - eta, align=align('c+-'))
 
 
     for xpos in [-(board_width/2 + 2), +(board_width/2 + 2)]:
@@ -286,6 +294,8 @@ if cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
     bottom -= loc * Pos(0,0,z_offset-eta) * Box(board_width+2*eta, board_length+eta, board_thickness+2*eta, align=align('c--'))
 
+    top -= Pos(bottom_pos) * Box(usbc_width,wall*2,z_offset+board_thickness+usbc_thickness/2, align=align('c--'))
+    
     #bottom += loc * Pos(0,0,z_offset) * Box(board_width, board_length, board_thickness, align=align('c--'))
 
     usbc_sketch = Plane.XZ * fillet(Rectangle(usbc_width+eta*2,usbc_thickness+eta*2, align=align('cc')).vertices(), radius=1.5)
@@ -294,7 +304,12 @@ if cable_mount_type == CableMountType.RP2040_SUPERMINI:
     top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
     top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,1,0))
     top -= usbc_loc * Box(usbc_width,10,10, align=align('c-+'))
-    top += loc * Pos(0,-eta,z_offset+board_thickness+usbc_thickness+eta) * Box(3,1,1, align=align('c--'))
+    
+    notch_face = make_face([Polyline([(0,0,0),
+                                      (0,0,3),
+                                      (0,1,0),
+                                      (0,0,0),])])                                      
+    top += loc * Pos(0,-eta,z_offset+board_thickness+usbc_thickness+eta) * extrude(notch_face, amount=3, both=True)
 else:
     assert(False)
 
