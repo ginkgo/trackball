@@ -235,6 +235,7 @@ def add_button(loc, flip_pcb):
                        (Pos(8, inner_radius + 6, 0), -45),
                        (Pos(button_width-19, inner_radius + 8, 0), 135),
                        (Pos(inner_radius + 8, button_width-19, 0), 135),
+                       (Pos(inner_radius + 6.5, inner_radius + 6.5, 0), -45),
                        ]:
         extrude_dir = Vector(0,1,0).rotate(Axis.Z, angle)
         face = pos * Pos(0,0,-height) * Rotation(0,0,angle) * Pos(0,-width/2,0) * bridge_face
