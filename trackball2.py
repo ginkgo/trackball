@@ -130,7 +130,8 @@ if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
 else:
     assert(False)
 
-bottom = extrude(base_plate,amount=wall)
+bottom = Compound()
+bottom += extrude(base_plate,amount=wall)
 
 inner_radius = ball/2 + 3
 button_width = 48
@@ -152,16 +153,70 @@ button_sketch = offset(button_sketch, amount=-1.5)
 # button_sketch = extrude(button_sketch, amount=1)
 # button1 = Rotation(-plate_angle, 0, 0) * button_sketch
 
-def add_button(loc):
+def plot2d(start, offsets):
+    points = [Vector(start)]
+    for o in offsets:
+        np = o + points[-1]
+        points.append(np)
+
+    points.append(points[0]) # Close
+
+    return Polyline(points)
+
+def mk_g304_keyswitch_pcb(loc, mirror_sketch):
+    global bottom
+    pcb_thickness = 0.75
+
+    # Base board
+    X = Vector(1,0)
+    Y = Vector(0,1)
+    start = (-5.65, -10.5)
+    sketch = plot2d(start, [5.5*X, -5*Y, 5.4*X, 5*Y, -2.1*X, 21*Y, -8.8*X, -4.9*Y, 2.5*X, -11.2*Y, -2.5*X])
+
+    if mirror_sketch:
+        sketch = mirror(sketch, Plane.YZ)
+
+    part = extrude(make_face(sketch), pcb_thickness, dir=(0,0,1))
+
+    part += Pos(0,-4.2) * Cylinder(0.9, 2.75, align=align('cc+'))
+    part += Pos(0,   0) * Cylinder(0.9, 2.75, align=align('cc+'))
+    part += Pos(0, 4.2) * Cylinder(0.9, 2.75, align=align('cc+'))
+
+    # Keyswitch
+    switch_length=12.8
+    switch_width=5.7
+    switch_height=6.5
+    part += Pos(0,0,pcb_thickness) * Box(switch_width,switch_length,switch_height, align=align('cc-'))
+    part += Pos(0,2,pcb_thickness+switch_height) * Box(2.9,1.2,1, align=align('cc-'))
+
+    # Find keyswitch contact position (it's the center of the top-most face)
+    top_loc = part.faces().sort_by(Axis.Z)[-1].center()
+    loc = loc * Pos(-top_loc)
+
+    # Screw holes
+    hole_positions = [Pos(0,-8.6), Pos(0,8.6)]
+    for hp in hole_positions:
+        part -= hp * Cylinder(1.6/2,3)
+
+        leg1 = extrude(loc * hp * Rotation(180,0,0) * Circle(2.5), until=Until.NEXT, target=bottom)
+        leg2 = extrude(loc * hp * Pos(0,0,-1) * Rotation(180,0,0) * Circle(2.5), dir=(0,0,-1), until=Until.NEXT, target=bottom)
+
+        bottom = leg1 + leg2 + bottom
+        bottom -= (loc * hp * Cylinder(1.6/2, 4.1, align=align('cc+')))
+
+    return loc * part
+
+keyswitch_pcbs = []
+def add_button(loc, flip_pcb):
     global button_sketch
     global top
+    global keyswitch_pcbs
 
     top = loc.inverse() * top
     top = Compound([top])
     
     top -= extrude(button_sketch, amount=-wall, taper=45)
     top += extrude(offset(button_sketch, amount=-1), amount=-wall, taper=45)
-    top += Pos(button_sketch.center()) * Box(5,5,5, align=align('cc+'))
     
     #top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
 
@@ -186,14 +241,18 @@ def add_button(loc):
         top += extrude(face, dir=extrude_dir, until=Until.NEXT, target=top)
         top += pos * Rotation(0,0,angle) * Box(width,width,height, align=align('cc+'))
 
-    #top = top.solid().fuse(top.solids()[1:])
+    pusher_width = 5
+    pusher_depth = 5
+    pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
+    top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
+    keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Rotation(0,0,135), flip_pcb))
     
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
 
-for angle in [0,90,180,270]:
+for i,angle in enumerate([0,90,180,270]):
 #for angle in [0]:    
-    add_button(Rotation(-plate_angle, 0, angle))
+    add_button(Rotation(-plate_angle, 0, angle), i%2 == 0)
 
 if cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
@@ -281,6 +340,9 @@ result = {
     'top': top,
     'bottom': bottom,
 }
+
+for i,keyswitch in enumerate(keyswitch_pcbs):
+    result[f'keyswitch_pcb{i}'] = keyswitch
 
 if __name__ == "__main__":
 
