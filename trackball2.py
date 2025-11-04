@@ -148,10 +148,6 @@ button_sketch = make_face([TangentArc([(0,inner_radius,0),
                                                       (0, inner_radius, 0)])])
 
 button_sketch = offset(button_sketch, amount=-1.5)
-#button_sketch = fillet(button_sketch.vertices(), 2)
-
-# button_sketch = extrude(button_sketch, amount=1)
-# button1 = Rotation(-plate_angle, 0, 0) * button_sketch
 
 def plot2d(start, offsets):
     points = [Vector(start)]
@@ -214,12 +210,26 @@ def add_button(loc, flip_pcb):
 
     top = loc.inverse() * top
     top = Compound([top])
-    
-    top -= extrude(button_sketch, amount=-wall, taper=45)
-    top += extrude(offset(button_sketch, amount=-1), amount=-wall, taper=45)
-    
-    #top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
 
+    extra = wall/2
+    D1 = 1
+    D2 = 0.25
+    
+    top += loft([Pos(0,0,-wall)       * offset(button_sketch, amount=0.5),
+                 Pos(0,0,-wall-extra) * offset(button_sketch, amount=0.5)], ruled=True)
+    
+    top -= loft([Pos(0,0,0)           * offset(button_sketch, amount=0),
+                 Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-(D1-D2)/3),
+#                 Pos(0,0,-wall-extra*(D2/D1))       * offset(button_sketch, amount=-wall),
+                 Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1+D2)], ruled=True)
+    
+    top += loft([Pos(0,0,0)           * offset(button_sketch, amount=-D1),
+                 Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-D1),
+                 Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1)], ruled=True)
+    
+    # top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
+    top = Part() + top
+    
     height = 4
     width = 4
     
@@ -231,8 +241,8 @@ def add_button(loc, flip_pcb):
                                        ( width/2, 0, 0),
                                        (-width/2, 0, 0)])])
 
-    for pos, angle in [(Pos(inner_radius + 6, 8, 0), -45),
-                       (Pos(8, inner_radius + 6, 0), -45),
+    for pos, angle in [(Pos(inner_radius + 7, 8, 0), -45),
+                       (Pos(8, inner_radius + 7, 0), -45),
                        (Pos(button_width-19, inner_radius + 8, 0), 135),
                        (Pos(inner_radius + 8, button_width-19, 0), 135),
                        (Pos(inner_radius + 6.5, inner_radius + 6.5, 0), -45),
