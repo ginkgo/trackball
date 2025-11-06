@@ -219,8 +219,8 @@ def add_button(loc, flip_pcb):
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=0.5)], ruled=True)
     
     top -= loft([Pos(0,0,0)           * offset(button_sketch, amount=0),
-                 Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-(D1-D2)/3),
-#                 Pos(0,0,-wall-extra*(D2/D1))       * offset(button_sketch, amount=-wall),
+#                Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-(D1-D2)/3),
+                  Pos(0,0,-wall-(D1-D2)/2)       * offset(button_sketch, amount=-wall-(D1-D2)/2),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1+D2)], ruled=True)
     
     top += loft([Pos(0,0,0)           * offset(button_sketch, amount=-D1),
@@ -254,9 +254,10 @@ def add_button(loc, flip_pcb):
 
     pusher_width = 5
     pusher_depth = 5
+    tension = 0.5 # Move keyswitch 0.5mm in for tension 
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
     top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
-    keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Rotation(0,0,135), flip_pcb))
+    keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
     
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
