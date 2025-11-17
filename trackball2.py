@@ -100,6 +100,8 @@ top = extrude(make_face(profile), amount=100/2, dir=(1,0,0), both=True)
 top -= Rotation(0,0,math.pi) * Sphere(radius=bowl_radius)
 top -= Cylinder(radius=15,height=100)
 
+front_face = top.faces().sort_by(Axis.Y)[-1]
+
 chamfer_edges = [
     top.edges().sort_by(Axis.Z)[-1],
     top.edges().sort_by(Axis.X)[-4:].sort_by(Axis.Z)[-1],
@@ -118,6 +120,16 @@ top_original = top
 
 base_plate = top.faces().sort_by(Axis.Z)[0]
 top = offset(top.solids()[0], amount=-wall, openings=base_plate)
+
+front_face_front_edge = front_face.edges().sort_by(Axis.Z)[0]
+front_face_center_pos = front_face_front_edge.center()
+wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,50,0) * Rot(90+50,0,0) * Rectangle(front_face_front_edge.length, 10, align=align('c-c'))])
+wrist_rest = chamfer(wrist_rest.edges().sort_by(Axis.Z)[4:], wall)
+wrist_rest += extrude(wrist_rest.faces().sort_by(Axis.Z)[0], amount=wall)
+for loc in [front_face.location_at(*uv) for uv in [(0.5,0.2), (0.5,0.8)]]:
+    wrist_rest -= loc * Cylinder(radius=5+eta/2, height=3+eta)
+    top += loc * Pos(0,0,-wall) * Cone(top_radius=7, bottom_radius=5.5, height=0.5, align=align('cc+'))
+    top -= loc * Pos(0,0,-wall) * Cylinder(radius=5.1, height=2, align=align('cc+'))
 
 if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
     # Cut holes for BTUs at the end
@@ -386,6 +398,7 @@ result = {
     'ball': trackball,
     'top': top,
     'bottom': bottom,
+    'wrist_rest': wrist_rest,
 }
 
 if not skip_pcbs:
