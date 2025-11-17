@@ -68,6 +68,10 @@ M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bo
 M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
 M2x6 = CounterBoreHole(radius=0.95, depth=7, counter_bore_radius=2.1, counter_bore_depth=0.7)
 
+skip_buttons = False
+skip_usb_plug = False 
+skip_pcbs = False
+
 eta = 0.1 # General tolerance
 
 trackball = Sphere(radius=ball/2)
@@ -82,7 +86,7 @@ else:
     assert(False)
 
 
-plate_angle = 18
+plate_angle = 13.5
 angle_r = plate_angle*math.pi/180
 profile = Polyline([(0,-60,-ball/2),
                     (0, 50,-ball/2),
@@ -110,6 +114,7 @@ chamfer_edges = [
     top.edges().sort_by_distance(Vertex(-1,0,0))[0],
 ]
 top = chamfer(chamfer_edges, wall)
+top_original = top
 
 base_plate = top.faces().sort_by(Axis.Z)[0]
 top = offset(top.solids()[0], amount=-wall, openings=base_plate)
@@ -132,6 +137,24 @@ else:
 
 bottom = Compound()
 bottom += extrude(base_plate,amount=wall)
+
+top = Part() + top
+bottom = Part() + bottom
+
+shrunk_bottom_face = offset(bounding_box(bottom).faces().sort_by(Axis.Z)[-1], amount=-4)
+bottom_points = shrunk_bottom_face.vertices() + \
+    [Vertex(shrunk_bottom_face.edges().sort_by(Axis.X)[0].center()), \
+     Vertex(shrunk_bottom_face.edges().sort_by(Axis.X)[-1].center())]
+
+for p in bottom_points:
+    pd = Vector(p).normalized()
+    extrude_dir = pd.cross(Vector(0,0,1).cross(pd).normalized())
+    top += extrude(Pos(p) * Circle(radius=4), until=Until.NEXT, target=top, dir=extrude_dir)
+    top -= Pos(p) * Cone(bottom_radius=3.5, top_radius=2, height=1, align=align('cc-'))
+    bottom += Pos(p) * Cone(bottom_radius=3.5-eta, top_radius=2-eta, height=1-eta, align=align('cc-'))
+    
+    top -= Pos(0,0,-wall) * Pos(p) * Rot(180,0,0) * M3x4
+    bottom -= Pos(0,0,-wall) * Pos(p) * Rot(180,0,0) * M3x4
 
 inner_radius = ball/2 + 3
 button_width = 48
@@ -194,7 +217,7 @@ def mk_g304_keyswitch_pcb(loc, mirror_sketch):
     for hp in hole_positions:
         part -= hp * Cylinder(1.6/2,3)
 
-        leg1 = extrude(loc * hp * Rotation(180,0,0) * Circle(2.5), until=Until.NEXT, target=bottom)
+        leg1 = extrude(loc * hp * Rotation(180,0,0) * Circle(2.5), until=Until.LAST, target=bottom)
         leg2 = extrude(loc * hp * Pos(0,0,-1) * Rotation(180,0,0) * Circle(2.5), dir=(0,0,-1), until=Until.NEXT, target=bottom)
 
         bottom = leg1 + leg2 + bottom
@@ -245,7 +268,7 @@ def add_button(loc, flip_pcb):
                        (Pos(8, inner_radius + 7, 0), -45),
                        (Pos(button_width-19, inner_radius + 8, 0), 135),
                        (Pos(inner_radius + 8, button_width-19, 0), 135),
-                       (Pos(inner_radius + 6.5, inner_radius + 6.5, 0), -45),
+#                       (Pos(inner_radius + 6.5, inner_radius + 6.5, 0), -45),
                        ]:
         extrude_dir = Vector(0,1,0).rotate(Axis.Z, angle)
         face = pos * Pos(0,0,-height) * Rotation(0,0,angle) * Pos(0,-width/2,0) * bridge_face
@@ -262,11 +285,13 @@ def add_button(loc, flip_pcb):
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
 
-for i,angle in enumerate([0,90,180,270]):
-#for angle in [0]:    
-    add_button(Rotation(-plate_angle, 0, angle), i%2 == 0)
+if not skip_buttons:
+    for i,angle in enumerate([0,90,180,270]):
+        add_button(Rotation(-plate_angle, 0, angle), i%2 == 0)
 
-if cable_mount_type == CableMountType.RP2040_SUPERMINI:
+if skip_usb_plug:
+    None
+elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
     back_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = back_edge.center()
@@ -357,16 +382,15 @@ def mk_sensor_pcb(loc):
 
     return loc * board
 
-sensor_pcb1 = mk_sensor_pcb(Rotation(0, 60,-90) * Pos(0,0,-ball/2 - 7.41))
-sensor_pcb2 = mk_sensor_pcb(Rotation(0,-60,-90) * Pos(0,0,-ball/2 - 7.41))
-
 result = {
     'ball': trackball,
-    'sensor_pcb1': sensor_pcb1,
-    'sensor_pcb2': sensor_pcb2,
     'top': top,
     'bottom': bottom,
 }
+
+if not skip_pcbs:
+    result['sensor_pcb1'] = mk_sensor_pcb(Rotation(0, 60,-90) * Pos(0,0,-ball/2 - 7.41))
+    result['sensor_pcb2'] = mk_sensor_pcb(Rotation(0,-60,-90) * Pos(0,0,-ball/2 - 7.41))
 
 for i,keyswitch in enumerate(keyswitch_pcbs):
     result[f'keyswitch_pcb{i}'] = keyswitch
