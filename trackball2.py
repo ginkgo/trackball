@@ -161,7 +161,7 @@ bottom_points = shrunk_bottom_face.vertices() + \
 for p in bottom_points:
     pd = Vector(p).normalized()
     extrude_dir = pd.cross(Vector(0,0,1).cross(pd).normalized())
-    top += extrude(Pos(p) * Circle(radius=4), until=Until.NEXT, target=top, dir=extrude_dir)
+    top += extrude(Pos(p) * Pos(0,0,eta) * Circle(radius=4), until=Until.NEXT, target=top, dir=extrude_dir)
     top -= Pos(p) * Cone(bottom_radius=3.5, top_radius=2, height=1, align=align('cc-'))
     bottom += Pos(p) * Cone(bottom_radius=3.5-eta, top_radius=2-eta, height=1-eta, align=align('cc-'))
     
