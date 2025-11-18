@@ -123,7 +123,7 @@ top = offset(top.solids()[0], amount=-wall, openings=base_plate)
 
 front_face_front_edge = front_face.edges().sort_by(Axis.Z)[0]
 front_face_center_pos = front_face_front_edge.center()
-wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,50,0) * Rot(90+50,0,0) * Rectangle(front_face_front_edge.length, 10, align=align('c-c'))])
+wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,70,0) * Rot(90+50,0,0) * Rectangle(front_face_front_edge.length, 10, align=align('c-c'))])
 wrist_rest = chamfer(wrist_rest.edges().sort_by(Axis.Z)[4:], wall)
 wrist_rest += extrude(wrist_rest.faces().sort_by(Axis.Z)[0], amount=wall)
 for loc in [front_face.location_at(*uv) for uv in [(0.5,0.2), (0.5,0.8)]]:
@@ -394,16 +394,15 @@ def mk_sensor_pcb(loc):
 
     return loc * board
 
-result = {
-    'ball': trackball,
-    'top': top,
-    'bottom': bottom,
-    'wrist_rest': wrist_rest,
-}
-
+result = {}
 if not skip_pcbs:
     result['sensor_pcb1'] = mk_sensor_pcb(Rotation(0, 60,-90) * Pos(0,0,-ball/2 - 7.41))
     result['sensor_pcb2'] = mk_sensor_pcb(Rotation(0,-60,-90) * Pos(0,0,-ball/2 - 7.41))
+
+result['ball'] = trackball
+result['top'] = top
+result['bottom'] = bottom
+result['wrist_rest'] = wrist_rest
 
 for i,keyswitch in enumerate(keyswitch_pcbs):
     result[f'keyswitch_pcb{i}'] = keyswitch
