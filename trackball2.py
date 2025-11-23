@@ -289,7 +289,7 @@ def add_button(loc, flip_pcb):
 
     pusher_width = 5
     pusher_depth = 5
-    tension = 0.5 # Move keyswitch 0.5mm in for tension 
+    tension = 0.25 # Move keyswitch 0.5mm in for tension 
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
     top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
     keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
