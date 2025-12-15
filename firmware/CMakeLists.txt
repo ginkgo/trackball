@@ -7,6 +7,17 @@ project(trackball)
 pico_sdk_init()
 
 option(BOARD "Select the type of board to target (RPI_PICO or RP2040_SUPERMINI)" "RPI_PICO")
+option(TRACKBALL "Select the type of trackball to target (MK_I or MK_II)" "MK_I")
+
+if (TRACKBALL STREQUAL "MK_I")
+  add_definitions(-DTRACKBALL_MK_I=1)
+elseif(TRACKBALL STREQUAL "MK_II")
+  add_definitions(-DTRACKBALL_MK_II=1)
+else()
+  message(FATAL_ERROR "Invalid option for TRACKBALL: ${TRACKBALL}")
+endif()
+  
+  
 
 if (BOARD STREQUAL "RPI_PICO")
   add_definitions(-DRPI_PICO=1)

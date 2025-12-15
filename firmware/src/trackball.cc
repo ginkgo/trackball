@@ -78,7 +78,13 @@ uint button_pins[NBUTTONS] = { 0, 14, 1, 15};
 #define SENSOR1_MOSI 4
 #define SENSOR1_SCK 5
 #elif RP2040_SUPERMINI
+
+#if TRACKBALL_MK_II
+uint button_pins[NBUTTONS] = { 7, 4, 6, 3};
+#else
 uint button_pins[NBUTTONS] = { 6, 3, 7, 4};
+#endif
+
 // GPIO pins to pull down so we can use them as extra GND pins
 #define NGND_PINS 2
 uint gnd_pins[NGND_PINS] = {2, 5};
@@ -460,9 +466,19 @@ bool hid_task() {
 
 	sensors.update();
 
+#if TRACKBALL_MK_I
+	// 45 degree angle -> 1/sqrt(2) factor
 	double movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
 	double movement_y = ((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
 	double movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
+#elif TRACKBALL_MK_II
+	// 60 degree angle -> 2*1/2 factor (inverted)
+	double movement_x =  -(sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
+	double movement_y =  -(sensors.movement[0][1] + sensors.movement[1][1]);
+	double movement_z =	 -(sensors.movement[0][1] - sensors.movement[1][1]);
+#else
+#error Unknown Trackball
+#endif
 
 	if (ABS(movement_y) + ABS(movement_x) > ABS(movement_z) * 0.5) {
 		movement_z = 0;
@@ -470,7 +486,6 @@ bool hid_task() {
 		movement_x = 0;
 		movement_y = 0;
 	}
-
 
 	movement_x *= 0.1;
 	movement_y *= 0.1;
