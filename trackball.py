@@ -1,13 +1,24 @@
 from build123d import *
-from enum import Enum
 import sys
 
+from trackball_common import *
+
 # All measurements in millimeters
+
+## Configuration:
 
 # Ball diameter (pick one)
 ball = 57.2    # pool billiards ball
 #ball = 52.4   # snooker ball
 #ball = 55     # Kensington ball
+
+switch_pcb_type = SwitchPCBType.G304
+
+suspension_type = SuspensionType.BALL_TRANSFER_UNIT
+cable_mount_type = CableMountType.RP2040_SUPERMINI
+
+# Bearing diameter
+bearing = 2.5
 
 # Thickness of walls
 wall = 2
@@ -15,78 +26,9 @@ wall = 2
 base_width=110
 base_height=(ball+10)/2
 
-# Type of ball suspension used
-class SuspensionType(Enum):
-    BEARING_BALL = 1
-    BALL_TRANSFER_UNIT = 2
-
-suspension_type = SuspensionType.BALL_TRANSFER_UNIT
-
-# Bearing diameter
-bearing = 2.5
-
-# Measurements for 7.5mm YK310 ball transfer unit (from datasheet)
-btu_D  = 9
-btu_D1 = 7.5
-btu_L  = 4
-btu_L1 = 1.1
-btu_H  = 1
-
-print_resolution = 0.1
-
-add_logo=False
-add_text=''
-
-class CableMountType(Enum):
-    # Simple hole in the back to lead cable connected to RaspPi Pico to
-    HOLE = 1
-
-    # USB-C plug in back
-    USBC_PLUG = 2
-
-    # Use a RP2040 Super-Mini board instead of pi pico and place it in back so
-    # the USB-C plug can be used directly
-    RP2040_SUPERMINI = 3
-
-cable_mount_type = CableMountType.RP2040_SUPERMINI
-
-class SwitchPCBType(Enum):
-    # Jacek Fedoryński's key switch PCB
-    JFEDOR2 = 1
-
-    # G304/G305 replacement key switch PCB
-    G304 = 2
-
-switch_pcb_type = SwitchPCBType.G304
-
 # Parameters of trackball case arc
 arc_radius=300/2
 arc_location=(0,-20,-arc_radius)
-
-def align(xyz):
-    d = {'c': Align.CENTER,
-         '-': Align.MIN,
-         '+': Align.MAX}
-    return [d[c] for c in xyz]
-
-def prusa_trick_borehole(radius, depth, counter_bore_radius, counter_bore_depth):
-    loc = Pos(0,0,1)
-
-    part = Cylinder(radius, counter_bore_depth + depth, align=align('cc+'))
-    part += Cylinder(counter_bore_radius, counter_bore_depth + 1, align=align('cc+'))
-    part += (Box(2*radius, 2*counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')) &
-             Cylinder(counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')))
-    part += Box(2*radius, 2*radius, counter_bore_depth + 1 + 2*print_resolution, align=align('cc+'))
-
-    return loc * part
-
-# Bore holes for screws
-M3x4 = prusa_trick_borehole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
-M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
-M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
-M2x6 = CounterBoreHole(radius=0.95, depth=7, counter_bore_radius=2.1, counter_bore_depth=0.7)
-
-eta = 0.1 # General tolerance
 
 def mk_arc_shell(r1, r2):
     loc = Location(arc_location)
@@ -169,18 +111,6 @@ def mk_top():
     rots = [Rotation(0,0,angle) for angle in range(0,360,90)]
     part -= [r * button_mask for r in rots]
 
-    if add_logo:
-        logo = make_face(import_svg('ginkgoleaf.svg'))
-        logo = logo.scale(0.1)
-        logo = Pos(-logo.center()) * logo
-        logo = Pos(12,-14) * Pos(-base_width/2,75,0) * Rotation(0,0,180+30) * logo
-        part -= [extrude(f.project_to_shape_alt(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in logo.faces()]
-
-    if add_text:
-        text = Text(add_text, font_size=8, font="Helvetica Neue", font_style=FontStyle.ITALIC, align=Align.MIN)
-        text = Rotation(0,0,180) * Pos(-base_width/2+5,-71,0) * text
-        part -= [extrude(f.project_to_shape(part, direction=(0,0,-1)),-0.5, dir=(0,1,1)) for f in text.faces()]
-
     return part
 top = mk_top()
 
@@ -241,7 +171,7 @@ def mk_bottom():
 
     # Add screw holes
     bottom_face = bounding_box(part).faces().sort_by(Axis.Z)[0]
-    bottom_height = bottom_face.vertices()[0].to_tuple()[2]
+    bottom_height = tuple(bottom_face.vertices()[0])[2]
     bottom_corners = bottom_face.vertices()
     hole_positions = [
         Pos( 4.5, 4.5)  * Pos(bottom_corners.sort_by(Axis.Y)[:2].sort_by(Axis.X)[0]),

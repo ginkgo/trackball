@@ -2,6 +2,7 @@ from build123d import *
 from enum import Enum
 import sys
 import math
+from trackball_common import *
 
 # All measurements in millimeters
 
@@ -10,69 +11,19 @@ ball = 57.2    # pool billiards ball
 #ball = 52.4   # snooker ball
 #ball = 55     # Kensington ball
 
-# Thickness of walls
-wall = 2
-
-# Type of ball suspension used
-class SuspensionType(Enum):
-    BEARING_BALL = 1
-    BALL_TRANSFER_UNIT = 2
-
 suspension_type = SuspensionType.BALL_TRANSFER_UNIT
 
-class CableMountType(Enum):
-    # Simple hole in the back to lead cable connected to RaspPi Pico to
-    HOLE = 1
-
-    # USB-C plug in back
-    USBC_PLUG = 2
-
-    # Use a RP2040 Super-Mini board instead of pi pico and place it in back so
-    # the USB-C plug can be used directly
-    RP2040_SUPERMINI = 3
-
 cable_mount_type = CableMountType.RP2040_SUPERMINI
+
+# Thickness of walls
+wall = 2
 
 # Bearing diameter
 bearing = 2.5
 
-# Measurements for 7.5mm YK310 ball transfer unit (from datasheet)
-btu_D  = 9
-btu_D1 = 7.5
-btu_L  = 4
-btu_L1 = 1.1
-btu_H  = 1
-
-print_resolution = 0.1
-
-def align(xyz):
-    d = {'c': Align.CENTER,
-         '-': Align.MIN,
-         '+': Align.MAX}
-    return [d[c] for c in xyz]
-
-def prusa_trick_borehole(radius, depth, counter_bore_radius, counter_bore_depth):
-    loc = Pos(0,0,1)
-
-    part = Cylinder(radius, counter_bore_depth + depth, align=align('cc+'))
-    part += Cylinder(counter_bore_radius, counter_bore_depth + 1, align=align('cc+'))
-    part += (Box(2*radius, 2*counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')) &
-             Cylinder(counter_bore_radius, counter_bore_depth + 1 + print_resolution, align=align('cc+')))
-    part += Box(2*radius, 2*radius, counter_bore_depth + 1 + 2*print_resolution, align=align('cc+'))
-
-    return loc * part
-
-# Bore holes for screws
-M3x4 = prusa_trick_borehole(radius=1.45, depth=5, counter_bore_radius=3.1, counter_bore_depth=1.2)
-M2x3 = CounterBoreHole(radius=0.95, depth=4, counter_bore_radius=2.1, counter_bore_depth=0.7)
-M2x4 = CounterBoreHole(radius=0.95, depth=5, counter_bore_radius=2.1, counter_bore_depth=0.7)
-M2x6 = CounterBoreHole(radius=0.95, depth=7, counter_bore_radius=2.1, counter_bore_depth=0.7)
-
 skip_buttons = False
-skip_usb_plug = False 
+skip_usb_plug = False
 skip_pcbs = False
-
-eta = 0.1 # General tolerance
 
 trackball = Sphere(radius=ball/2)
 
@@ -164,7 +115,7 @@ for p in bottom_points:
     top += extrude(Pos(p) * Pos(0,0,eta) * Circle(radius=4), until=Until.NEXT, target=top, dir=extrude_dir)
     top -= Pos(p) * Cone(bottom_radius=3.5, top_radius=2, height=1, align=align('cc-'))
     bottom += Pos(p) * Cone(bottom_radius=3.5-eta, top_radius=2-eta, height=1-eta, align=align('cc-'))
-    
+
     top -= Pos(0,0,-wall) * Pos(p) * Rot(180,0,0) * M3x4
     bottom -= Pos(0,0,-wall) * Pos(p) * Rot(180,0,0) * M3x4
 
@@ -249,25 +200,25 @@ def add_button(loc, flip_pcb):
     extra = wall/2
     D1 = 1
     D2 = 0.25
-    
+
     top += loft([Pos(0,0,-wall)       * offset(button_sketch, amount=0.5),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=0.5)], ruled=True)
-    
+
     top -= loft([Pos(0,0,0)           * offset(button_sketch, amount=0),
 #                Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-(D1-D2)/3),
                   Pos(0,0,-wall-(D1-D2)/2)       * offset(button_sketch, amount=-wall-(D1-D2)/2),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1+D2)], ruled=True)
-    
+
     top += loft([Pos(0,0,0)           * offset(button_sketch, amount=-D1),
                  Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-D1),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1)], ruled=True)
-    
+
     # top += Rotation(0,0,-45) * Box(wall,50,wall, align=align('c-+'))
     top = Part() + top
-    
+
     height = 4
     width = 4
-    
+
     bridge_face = make_face([Polyline([(-width/2, 0, 0),
                                        (-width/2, 0, -2*print_resolution),
                                        (-width/4, 0, -3*print_resolution),
@@ -289,11 +240,11 @@ def add_button(loc, flip_pcb):
 
     pusher_width = 5
     pusher_depth = 5
-    tension = 0.25 # Move keyswitch 0.5mm in for tension 
+    tension = 0.25 # Move keyswitch 0.5mm in for tension
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
     top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
     keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
-    
+
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
 
@@ -324,7 +275,7 @@ elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
     bottom += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
     bottom += loc * Pos(-7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
     bottom += loc * Pos( 7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
-    
+
     bottom_notch_face = make_face([Polyline([(0,-wall-eta,0),
                                              (0, wall,0),
                                              (0, wall,z_offset+board_thickness-eta),
@@ -344,7 +295,7 @@ elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
     bottom -= loc * Pos(0,0,z_offset-eta) * Box(board_width+2*eta, board_length+eta, board_thickness+2*eta, align=align('c--'))
 
     top -= Pos(bottom_pos) * Box(usbc_width,wall*2,z_offset+board_thickness+usbc_thickness/2, align=align('c--'))
-    
+
     #bottom += loc * Pos(0,0,z_offset) * Box(board_width, board_length, board_thickness, align=align('c--'))
 
     usbc_sketch = Plane.XZ * fillet(Rectangle(usbc_width+eta*2,usbc_thickness+eta*2, align=align('cc')).vertices(), radius=1.5)
@@ -353,11 +304,11 @@ elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
     top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,-1,0), taper=-60)
     top -= usbc_loc * extrude(usbc_sketch, wall, dir=(0,1,0))
     top -= usbc_loc * Box(usbc_width,10,10, align=align('c-+'))
-    
+
     notch_face = make_face([Polyline([(0,0,0),
                                       (0,0,3),
                                       (0,1,0),
-                                      (0,0,0),])])                                      
+                                      (0,0,0),])])
     top += loc * Pos(0,-eta,z_offset+board_thickness+usbc_thickness+eta) * extrude(notch_face, amount=3, both=True)
 else:
     assert(False)
