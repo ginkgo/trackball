@@ -6,21 +6,22 @@ from trackball_common import *
 
 # All measurements in millimeters
 
-# Ball diameter (pick one)
-ball = 57.2    # pool billiards ball
-#ball = 52.4   # snooker ball
-#ball = 55     # Kensington ball
+## Default configuration:
+config = TrackballConfig(57.2, # pool billiards ball
+                         SwitchPCBType.G304,
+                         SuspensionType.BALL_TRANSFER_UNIT,
+                         CableMountType.RP2040_SUPERMINI,
+                         2.5)
 
-suspension_type = SuspensionType.BALL_TRANSFER_UNIT
 
-cable_mount_type = CableMountType.RP2040_SUPERMINI
+# Local copy for brevity
+ball = config.ball
+bearing = config.bearing
 
 # Thickness of walls
 wall = 2
 
-# Bearing diameter
-bearing = 2.5
-
+## Some skip flags for quicker debugging
 skip_buttons = False
 skip_usb_plug = False
 skip_pcbs = False
@@ -29,9 +30,9 @@ trackball = Sphere(radius=ball/2)
 
 bottom_hole_radius = 8
 
-if suspension_type == SuspensionType.BEARING_BALL:
+if config.suspension_type == SuspensionType.BEARING_BALL:
     bowl_radius = (ball+bearing)/2
-elif suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
+elif config.suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
     bowl_radius = ((ball/2 + btu_L1)**2 + (btu_D/2)**2)**0.5
 else:
     assert(False)
@@ -82,7 +83,7 @@ for loc in [front_face.location_at(*uv) for uv in [(0.5,0.2), (0.5,0.8)]]:
     top += loc * Pos(0,0,-wall) * Cone(top_radius=7, bottom_radius=5.5, height=0.5, align=align('cc+'))
     top -= loc * Pos(0,0,-wall) * Cylinder(radius=5.1, height=2, align=align('cc+'))
 
-if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
+if config.suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
     # Cut holes for BTUs at the end
     for angle in range(0,360+60,120):
         loc = Rotation(-8,0,0) * Rotation(0,0,angle) * Rotation(60,0,0) * Pos(0,0,-(ball/2+btu_L1))
@@ -254,7 +255,7 @@ if not skip_buttons:
 
 if skip_usb_plug:
     None
-elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
+elif config.cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
     back_edge = top.faces().sort_by(Axis.Y)[0].edges().sort_by(Axis.Z)[0]
     bottom_pos = back_edge.center()

@@ -1,6 +1,8 @@
 from build123d import *
 from enum import Enum
 
+### Configuration enum types
+
 # Type of ball suspension used
 class SuspensionType(Enum):
     BEARING_BALL = 1
@@ -23,6 +25,16 @@ class SwitchPCBType(Enum):
 
     # G304/G305 replacement key switch PCB
     G304 = 2
+
+### Config type and parser
+
+class TrackballConfig():
+    def __init__(self, ball, switch_pcb_type, suspension_type, cable_mount_type, bearing):
+        self.ball = ball
+        self.switch_pcb_type = switch_pcb_type
+        self.suspension_type = suspension_type
+        self.cable_mount_type = cable_mount_type
+        self.bearing = bearing
 
 ### Utility functions, constants, and parts
 

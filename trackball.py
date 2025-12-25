@@ -5,20 +5,17 @@ from trackball_common import *
 
 # All measurements in millimeters
 
-## Configuration:
+## Default configuration:
+config = TrackballConfig(57.2, # pool billiards ball
+                         SwitchPCBType.G304,
+                         SuspensionType.BALL_TRANSFER_UNIT,
+                         CableMountType.RP2040_SUPERMINI,
+                         2.5)
 
-# Ball diameter (pick one)
-ball = 57.2    # pool billiards ball
-#ball = 52.4   # snooker ball
-#ball = 55     # Kensington ball
 
-switch_pcb_type = SwitchPCBType.G304
-
-suspension_type = SuspensionType.BALL_TRANSFER_UNIT
-cable_mount_type = CableMountType.RP2040_SUPERMINI
-
-# Bearing diameter
-bearing = 2.5
+# Local copy for brevity
+ball = config.ball
+bearing = config.bearing
 
 # Thickness of walls
 wall = 2
@@ -60,9 +57,9 @@ button_mask = extrude(button_sketch, amount=-60)
 
 bottom_hole_radius = 8
 
-if suspension_type == SuspensionType.BEARING_BALL:
+if config.suspension_type == SuspensionType.BEARING_BALL:
     bowl_radius = (ball+bearing)/2
-elif suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
+elif config.suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
     bowl_radius = ((ball/2 + btu_L1)**2 + (btu_D/2)**2)**0.5
 else:
     assert(False)
@@ -75,7 +72,7 @@ def mk_top():
     part -= Sphere(radius=bowl_radius)
     part -= Cylinder(bottom_hole_radius,100)
 
-    if suspension_type == SuspensionType.BEARING_BALL:
+    if config.suspension_type == SuspensionType.BEARING_BALL:
         # Cut holes for bearing balls before offset
         locs = (Rotation(0,0,angle) * Rotation(70,0,0) * Pos(0,0,-(ball+bearing)/2)  for angle in range(60,360+60,120))
         part -= [loc * Cylinder(bearing/2, bearing + eta) for loc in locs]
@@ -94,7 +91,7 @@ def mk_top():
     ]
     part = chamfer(fillet_edges, wall )
 
-    if suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
+    if config.suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
         # Cut holes for BTUs at the end
         for angle in range(0,360+60,120):
             loc = Rotation(-8,0,0) * Rotation(0,0,angle) * Rotation(60,0,0) * Pos(0,0,-(ball/2+btu_L1))
@@ -194,7 +191,7 @@ def mk_bottom():
         part -= pos  * Rot(180,0,0) * M2x6
         top  -= pos  * Rot(180,0,0) * M2x6
 
-    if cable_mount_type == CableMountType.HOLE:
+    if config.cable_mount_type == CableMountType.HOLE:
         # Cut hole for USB cable in top
         hole_radius=3
         hole_sketch = [
@@ -209,7 +206,7 @@ def mk_bottom():
 
         top -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=3, dir=(0,1,0))
         part -= Pos(bottom_pos) * extrude(make_face(hole_sketch), amount=10, dir=(0,1,0))
-    elif cable_mount_type == CableMountType.USBC_PLUG:
+    elif config.cable_mount_type == CableMountType.USBC_PLUG:
         loc = Pos(bottom_pos) * Pos(0,wall,6)
 
         usbc_sketch = Plane.XZ * fillet(Rectangle(8.34,2.56).vertices(), radius=1.25)
@@ -218,7 +215,7 @@ def mk_bottom():
         hole_dist = 16.15
         top -= loc * Rot(90,0,0) * Pos( hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
         top -= loc * Rot(90,0,0) * Pos(-hole_dist/2,0,0) * Cylinder(radius=0.95, height=1.5, align=align('cc-'))
-    elif cable_mount_type == CableMountType.RP2040_SUPERMINI:
+    elif config.cable_mount_type == CableMountType.RP2040_SUPERMINI:
         z_offset = 4
 
         # Super-mini RP2040 dimensions
@@ -318,7 +315,7 @@ def mk_pipico(pos):
     bottom -= [pos * p * Cylinder(0.9,3, align=align('cc+')) for p in hole_positions]
 
     return pos * part
-if cable_mount_type != CableMountType.RP2040_SUPERMINI:
+if config.cable_mount_type != CableMountType.RP2040_SUPERMINI:
     pipico = mk_pipico(Pos(0,45, -30))
 
 
@@ -467,9 +464,9 @@ for i,b in enumerate(strips):
     p = b.faces().filter_by(Axis.Z).sort_by_distance((0,0,-ball/2))[0].center()
     rot = Rotation(0,0,90) if (i not in [1,2]) else Rotation(0,0,-90)
 
-    if switch_pcb_type == SwitchPCBType.JFEDOR2:
+    if config.switch_pcb_type == SwitchPCBType.JFEDOR2:
         pcb = mk_jfedor2_keyswitch_pcb(Pos(p), rot)
-    elif switch_pcb_type == SwitchPCBType.G304:
+    elif config.switch_pcb_type == SwitchPCBType.G304:
         pcb = mk_g304_keyswitch_pcb(Pos(p), rot, mirror_sketch=(i in [2,3]))
     button_pcbs.append(pcb)
 
@@ -481,7 +478,7 @@ result = {
     'sensor_pcb2': sensor_pcb2,
 }
 
-if cable_mount_type != CableMountType.RP2040_SUPERMINI:
+if config.cable_mount_type != CableMountType.RP2040_SUPERMINI:
     result['pipico'] = pipico
 
 for i,b in enumerate(buttons):
