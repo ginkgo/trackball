@@ -101,11 +101,8 @@ if config.suspension_type == SuspensionType.BALL_TRANSFER_UNIT:
 else:
     assert(False)
 
-bottom = Compound()
-bottom += extrude(base_plate,amount=wall)
-
+bottom = Part() + extrude(base_plate,amount=wall)
 top = Part() + top
-bottom = Part() + bottom
 
 shrunk_bottom_face = offset(bounding_box(bottom).faces().sort_by(Axis.Z)[-1], amount=-4)
 bottom_points = shrunk_bottom_face.vertices() + \
