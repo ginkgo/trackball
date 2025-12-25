@@ -1,5 +1,7 @@
 from build123d import *
 from enum import Enum
+import argparse
+import os
 
 ### Configuration enum types
 
@@ -35,6 +37,55 @@ class TrackballConfig():
         self.suspension_type = suspension_type
         self.cable_mount_type = cable_mount_type
         self.bearing = bearing
+
+        self.outdir = "output"
+        self.gen_stl = False
+        self.gen_step = False
+
+    def parse_cmdline_args(self):
+        parser = argparse.ArgumentParser(description="Generates trackball parts")
+        parser.add_argument('-o', '--outdir', type=str, default=self.outdir, help='Output directory')
+        parser.add_argument('--stl', action='store_true', default=self.gen_stl, help='Generate STL files')
+        parser.add_argument('--step', action='store_true', default=self.gen_step, help='Generate STEP files')
+        parser.add_argument('--ballsize', type=float, default=self.ball, help='Size of trackball in mm')
+        parser.add_argument('--suspension_type', type=str, default=self.suspension_type.name,
+                            choices=[e.name for e in SuspensionType], help='Suspension type')
+        parser.add_argument('--cable_mount_type', type=str, default=self.cable_mount_type.name,
+                            choices=[e.name for e in CableMountType], help='Cable mount type')
+        parser.add_argument('--switch_pcb_type', type=str, default=self.switch_pcb_type.name,
+                            choices=[e.name for e in SwitchPCBType], help='Keyswitch PCB type')
+        parser.add_argument('--bearing', type=float, default=self.bearing,
+                            help='Bearing ball size (only used for static BEARING_BALL suspension)')
+
+        args = parser.parse_args()
+
+        self.ball = args.ballsize
+        self.switch_pcb_type = SwitchPCBType[args.switch_pcb_type]
+        self.suspension_type = SuspensionType[args.suspension_type]
+        self.cable_mount_type = CableMountType[args.cable_mount_type]
+        self.bearing = args.bearing
+        self.outdir = args.outdir
+        self.gen_stl = args.stl
+        self.gen_step = args.step
+
+        if not args.stl and not args.step:
+            print("Skipping generation (use --stl or --step)")
+            exit(0)
+
+def write_files(config, result):
+    if config.gen_stl or config.gen_step:
+        os.makedirs(config.outdir, exist_ok=True)
+
+    if config.gen_stl:
+        for k,v in result.items():
+            print(k)
+            exporter = Mesher()
+            exporter.add_shape(v)
+            exporter.write(f'{config.outdir}/{k}.stl')
+    if config.gen_step:
+        for k,v in result.items():
+            print(k)
+            export_step(v, f'{config.outdir}/{k}.step')
 
 ### Utility functions, constants, and parts
 

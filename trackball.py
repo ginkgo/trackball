@@ -12,6 +12,8 @@ config = TrackballConfig(57.2, # pool billiards ball
                          CableMountType.RP2040_SUPERMINI,
                          2.5)
 
+if __name__ == '__main__':
+    config.parse_cmdline_args()
 
 # Local copy for brevity
 ball = config.ball
@@ -490,23 +492,4 @@ for i,s in enumerate(strips):
 for i,b in enumerate(button_pcbs):
     result[f'button_pcb{i}'] = b
 
-if __name__ == "__main__":
-
-    if len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} STL|STEP')
-        exit(0)
-
-    if sys.argv[1] == 'STL':
-        for k,v in result.items():
-            print(k)
-            exporter = Mesher()
-            exporter.add_shape(v)
-            exporter.write(f'stl/{k}.stl')
-    elif sys.argv[1] == 'STEP':
-
-        for k,v in result.items():
-            print(k)
-            export_step(v, f'step/{k}.step')
-    else:
-        print(f'Usage: {sys.argv[0]} STL|STEP')
-        exit(0)
+write_files(config, result)
