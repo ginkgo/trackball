@@ -100,6 +100,18 @@ for config in ${!config@}; do
 	   --cable_mount_type ${config[cable_mount]} \
 	   --suspension_type ${config[suspension]}
 
+	if [ "${config[suspension]}" = BALL_TRANSFER_UNIT ]; then
+		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.0
+		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.5
+		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 3.0
+		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 3.5
+	fi
+
+	# Delete unnecessary models
+	rm output/ball*
+	rm output/*pcb*
+	rm output/pipico*
+
 	mkdir -p firmware/build
 	rm -rf firmware/build/*
 	cd firmware/build
