@@ -211,6 +211,7 @@ The pool balls I'm using aren't the highest quality and noticeable uneven in pla
 ### Update
 The Mk.II version is significantly easier to build and the button reach is generally better.
 
+<video src="img/mkii_in_action.mp4" width="480" height="480" controls></video>
 ![The Mk.II trackball in action](img/mkii_in_action.mp4)
 
 ## Future Ideas
