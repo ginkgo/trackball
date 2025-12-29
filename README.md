@@ -116,7 +116,7 @@ I used needle files for this.
 ## 3D printing (MK.II)
 There's only two parts that need to be printed.
 
-None should need support materials but
+None should need support materials but a spot or two of organic supports for the openings in the bowl of the `top` part might result in cleaner prints.
 
 * `bottom`
   * The base plate for the assembly
