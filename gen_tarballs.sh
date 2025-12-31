@@ -100,6 +100,22 @@ for config in ${!config@}; do
 	   --cable_mount_type ${config[cable_mount]} \
 	   --suspension_type ${config[suspension]}
 
+	f3d --line-width 3.0 -j -p --anti-aliasing --anti-aliasing-mode=ssaa \
+		--multi-file-mode all \
+		--camera-direction -1,-1,-0.5 \
+		--filename=false \
+		--axis=false \
+		--input output/*.step \
+		--output output/preview_front.png
+	
+	f3d --line-width 3.0 -j -p --anti-aliasing --anti-aliasing-mode=ssaa \
+		--multi-file-mode all \
+		--camera-direction 1,1,-0.5 \
+		--filename=false \
+		--axis=false \
+		--input output/*.step \
+		--output output/preview_back.png
+	
 	if [ "${config[suspension]}" = BALL_TRANSFER_UNIT ]; then
 		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.0
 		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.5
@@ -131,6 +147,8 @@ for config in ${!config@}; do
 	mv output/*.step $pkgdir/step
 	mkdir $pkgdir/stl
 	mv output/*.stl $pkgdir/stl
+	convert output/preview_front.png $pkgdir/preview_front.jpeg
+	convert output/preview_back.png $pkgdir/preview_back.jpeg
 
 	cp firmware/build/*.uf2 $pkgdir/
 

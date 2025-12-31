@@ -91,7 +91,7 @@ make -j8
 This generates a `trackball.uf2` which you can upload to your board.
 
 `<board_type>` is the type of microcontroller board you want to target. Possible options are `RPI_PICO` for a regular RaspberryPi Pico or `RP2040_SUPERMINI` for a RP2040 supermini board.
-`<trackball_version>` is the version of the trackball to generatoe. This is either `MK_I` for the Mk.I version or `MK_II` for the Mk.II version.
+`<trackball_version>` is the version of the trackball to generate. This is either `MK_I` for the Mk.I version or `MK_II` for the Mk.II version.
 
 ## 3D printing (MK.I)
 These are the parts you need to print:
@@ -122,10 +122,11 @@ None should need support materials but a spot or two of organic supports for the
   * The base plate for the assembly
 * `top`
   * The top cover and button assembly. This should be printed upside-down placed on its flat top surface.
-* `wristrest` (optional)
-  * This is an optional wristrest that attaches to the main unit with neodymium magnets.
+* `wrist_rest` (optional)
+  * This is an optional wrist-rest that attaches to the main unit with neodymium magnets.
 * `adapter_XXmm` (optional)
   * Adapter if you want to use a static bearing to hold the trackball (instead of a BTU)
+  * The `XXmm` number is the diameter of the bearing. So for instance `adapter_2.5mm` is for 2.5mm bearing balls.
 
 ## Parts
 
@@ -147,7 +148,7 @@ Apart from the 3d-printed parts you need the following:
 * 1 57.2mm billiards ball
   * Or a 55mm trackball if you adjust the ball size in the script
 * 3 YK310 type BTUs (or steel/ruby/ceramic bearings with an adapter)
-* 4 10x2mm cylindric neodymium magnets (for attaching wristrest in Mk.II)
+* 4 10x2mm cylindric neodymium magnets (for attaching wrist-rest in Mk.II)
   * The magnets in the main unit can also be thicker
 * Machine screws
   * M3x4 (For bottom screws)
@@ -157,6 +158,7 @@ Apart from the 3d-printed parts you need the following:
   * in case you use a RaspberryPi Pico board.
 * Various cabling and solder supplies
   * I recommend getting pairs of JST male/female cables so breakout boards can be attached after soldering.
+* Some adhesive rubber feet or strips so the trackball doesn't slip.
 
 ## Wiring
 
@@ -209,7 +211,8 @@ The pool balls I'm using aren't the highest quality and noticeable uneven in pla
 ![my work setup](img/img6.jpeg)
 
 ### Update
-The Mk.II version is significantly easier to build and the button reach is generally better.
+The Mk.II version is significantly easier to build and the button reach and feel is better.
+Honestly it's an all-around better design.
 
 <video src="img/mkii_in_action.mp4" width="480" height="480" controls></video>
 ![The Mk.II trackball in action](img/mkii_in_action.mp4)
