@@ -73,6 +73,8 @@ declare -A config9=(
 mkdir -p release
 rm -rf release/*
 
+UVRUN='uv run --with build123d --python cp312 '
+
 declare -n config
 for config in ${!config@}; do
 	name="ginkgo_trackball_${config[version]}_${config[ballsize]}mm_${config[cable_mount]}"
@@ -93,14 +95,14 @@ for config in ${!config@}; do
 		board_type=RPI_PICO
 	fi
 
-	uv run --with build123d $generator_name \
+	$UVRUN $generator_name \
 	   --step --stl --outdir output \
 	   --ball ${config[ballsize]} \
 	   --switch_pcb_type G304 \
 	   --cable_mount_type ${config[cable_mount]} \
 	   --suspension_type ${config[suspension]}
 
-	f3d --line-width 3.0 -j -p --anti-aliasing --anti-aliasing-mode=ssaa \
+	f3d --line-width 3.0 -j -p --anti-aliasing \
 		--multi-file-mode all \
 		--camera-direction -1,-1,-0.5 \
 		--filename=false \
@@ -108,7 +110,7 @@ for config in ${!config@}; do
 		--input output/*.step \
 		--output output/preview_front.png
 	
-	f3d --line-width 3.0 -j -p --anti-aliasing --anti-aliasing-mode=ssaa \
+	f3d --line-width 3.0 -j -p --anti-aliasing \
 		--multi-file-mode all \
 		--camera-direction 1,1,-0.5 \
 		--filename=false \
@@ -117,10 +119,10 @@ for config in ${!config@}; do
 		--output output/preview_back.png
 	
 	if [ "${config[suspension]}" = BALL_TRANSFER_UNIT ]; then
-		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.0
-		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 2.5
-		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 3.0
-		uv run --with build123d ./adapter.py --step --stl --outdir output --bearing 3.5
+		$UVRUN ./adapter.py --step --stl --outdir output --bearing 2.0
+		$UVRUN ./adapter.py --step --stl --outdir output --bearing 2.5
+		$UVRUN ./adapter.py --step --stl --outdir output --bearing 3.0
+		$UVRUN ./adapter.py --step --stl --outdir output --bearing 3.5
 	fi
 
 	# Delete unnecessary models
