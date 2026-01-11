@@ -104,8 +104,9 @@ These are the parts you need to print:
   * The top buttons. Each one has a different curvature so they're not interchangeable. Need supports.
 * `strip0`, `strip1`, `strip2`, `strip3`
   * The flexible springs to hold the button in place. You need 4 of these but they come in identical pairs (two shorter ones for the front and two longer ones for the back). Doesn't need supports when printed on the side.
-* `adapter_XXmm` (optional)
+* `adapter_X.Ymm` (optional)
   * Adapter if you want to use a static bearing to hold the trackball (instead of a BTU)
+  * The `X.Ymm` number is the diameter of the bearing. So for instance `adapter_2.5mm` is for 2.5mm bearing balls.
 
 I printed everything with PLA and a layer size of 0.1mm.
 
@@ -124,9 +125,9 @@ None should need support materials but a spot or two of organic supports for the
   * The top cover and button assembly. This should be printed upside-down placed on its flat top surface.
 * `wrist_rest` (optional)
   * This is an optional wrist-rest that attaches to the main unit with neodymium magnets.
-* `adapter_XXmm` (optional)
+* `adapter_X.Ymm` (optional)
   * Adapter if you want to use a static bearing to hold the trackball (instead of a BTU)
-  * The `XXmm` number is the diameter of the bearing. So for instance `adapter_2.5mm` is for 2.5mm bearing balls.
+  * The `X.Ymm` number is the diameter of the bearing. So for instance `adapter_2.5mm` is for 2.5mm bearing balls.
 
 ## Parts
 

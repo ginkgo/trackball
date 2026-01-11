@@ -77,7 +77,7 @@ top = offset(top.solids()[0], amount=-wall, openings=base_plate)
 
 front_face_front_edge = front_face.edges().sort_by(Axis.Z)[0]
 front_face_center_pos = front_face_front_edge.center()
-wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,70,0) * Rot(90+50,0,0) * Rectangle(front_face_front_edge.length, 10, align=align('c-c'))])
+wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,50,0) * Rot(90+50,0,0) * Rectangle(front_face_front_edge.length, 10, align=align('c-c'))])
 wrist_rest = chamfer(wrist_rest.edges().sort_by(Axis.Z)[4:], wall)
 wrist_rest += extrude(wrist_rest.faces().sort_by(Axis.Z)[0], amount=wall)
 for loc in [front_face.location_at(*uv) for uv in [(0.5,0.2), (0.5,0.8)]]:
@@ -240,7 +240,7 @@ def add_button(loc, flip_pcb):
 
     pusher_width = 5
     pusher_depth = 5
-    tension = 0.25 # Move keyswitch 0.5mm in for tension
+    tension = 0 # Move keyswitch in for tension (not used atm)
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
     top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
     keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
