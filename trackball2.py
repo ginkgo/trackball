@@ -81,7 +81,7 @@ wrist_rest = loft([front_face, Pos(front_face_center_pos) * Pos(0,50,0) * Rot(90
 wrist_rest = chamfer(wrist_rest.edges().sort_by(Axis.Z)[4:], wall)
 wrist_rest += extrude(wrist_rest.faces().sort_by(Axis.Z)[0], amount=wall)
 for loc in [front_face.location_at(*uv) for uv in [(0.5,0.2), (0.5,0.8)]]:
-    wrist_rest -= loc * Cylinder(radius=5+eta/2, height=3+eta)
+    wrist_rest -= loc * Cylinder(radius=5+eta/2, height=3+eta, align=align('cc-'))
     top += loc * Pos(0,0,-wall) * Cone(top_radius=7, bottom_radius=5.5, height=0.5, align=align('cc+'))
     top -= loc * Pos(0,0,-wall) * Cylinder(radius=5.1, height=2, align=align('cc+'))
 
@@ -209,7 +209,15 @@ def add_button(loc, flip_pcb):
                   Pos(0,0,-wall-(D1-D2)/2)       * offset(button_sketch, amount=-wall-(D1-D2)/2),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1+D2)], ruled=True)
 
-    top += loft([Pos(0,0,0)           * offset(button_sketch, amount=-D1),
+    front = None
+    front_offset = 0
+    if config.split_buttons:
+        # Create a 2 layer front for the button so it can be colored
+        front_offset = 2 * print_resolution
+        front = loc * loft([Pos(0,0,0) * offset(button_sketch, amount=-D1),
+                            Pos(0,0,-front_offset) * offset(button_sketch, amount=-front_offset-D1)], ruled=True)
+    
+    top += loft([Pos(0,0,-front_offset) * offset(button_sketch, amount=-front_offset-D1),
                  Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-D1),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1)], ruled=True)
 
@@ -236,21 +244,25 @@ def add_button(loc, flip_pcb):
         extrude_dir = Vector(0,1,0).rotate(Axis.Z, angle)
         face = pos * Pos(0,0,-height) * Rotation(0,0,angle) * Pos(0,-width/2,0) * bridge_face
         top += extrude(face, dir=extrude_dir, until=Until.NEXT, target=top)
-        top += pos * Rotation(0,0,angle) * Box(width,width,height, align=align('cc+'))
+        top += pos * Rotation(0,0,angle) * Pos(0,0,-front_offset) * Box(width,width,height-front_offset, align=align('cc+'))
 
     pusher_width = 5
     pusher_depth = 5
     tension = 0 # Move keyswitch in for tension (not used atm)
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
-    top += pusher_pos * Box(pusher_width,pusher_width,pusher_depth, align=align('cc-'))
+    top += pusher_pos * Pos(0,0,-front_offset) * Box(pusher_width,pusher_width,pusher_depth-front_offset, align=align('cc-'))
     keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
 
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
+    
+    return front
 
+# Fronts for split buttons (only used when configured)
+button_fronts = {}
 if not skip_buttons:
     for i,angle in enumerate([0,90,180,270]):
-        add_button(Rotation(-plate_angle, 0, angle), i%2 == 0)
+        button_fronts[f'button_front{i}'] = add_button(Rotation(-plate_angle, 0, angle), i%2 == 0)
 
 if skip_usb_plug:
     None
@@ -354,6 +366,9 @@ result['ball'] = trackball
 result['top'] = top
 result['bottom'] = bottom
 result['wrist_rest'] = wrist_rest
+
+if config.split_buttons:
+    result.update(button_fronts)
 
 for i,keyswitch in enumerate(keyswitch_pcbs):
     result[f'keyswitch_pcb{i}'] = keyswitch

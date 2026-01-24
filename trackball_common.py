@@ -41,6 +41,7 @@ class TrackballConfig():
         self.outdir = "output"
         self.gen_stl = False
         self.gen_step = False
+        self.split_buttons = False
 
     def parse_cmdline_args(self):
         parser = argparse.ArgumentParser(description="Generates trackball parts")
@@ -56,6 +57,7 @@ class TrackballConfig():
                             choices=[e.name for e in SwitchPCBType], help='Keyswitch PCB type')
         parser.add_argument('--bearing', type=float, default=self.bearing,
                             help='Bearing ball size (only used for static BEARING_BALL suspension)')
+        parser.add_argument('--split-buttons', action='store_true', default=self.split_buttons, help='Split out front of buttons so they can be colored differently (Mk.II only)')
 
         args = parser.parse_args()
 
@@ -67,6 +69,7 @@ class TrackballConfig():
         self.outdir = args.outdir
         self.gen_stl = args.stl
         self.gen_step = args.step
+        self.split_buttons = args.split_buttons
 
         if not args.stl and not args.step:
             print("Skipping generation (use --stl or --step)")
