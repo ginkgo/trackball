@@ -212,8 +212,8 @@ def add_button(loc, flip_pcb):
     front = None
     front_offset = 0
     if config.split_buttons:
-        # Create a 2 layer front for the button so it can be colored
-        front_offset = 2 * print_resolution
+        # Create a front for the button so it can be colored separately
+        front_offset = 4 * print_resolution
         front = loc * loft([Pos(0,0,0) * offset(button_sketch, amount=-D1),
                             Pos(0,0,-front_offset) * offset(button_sketch, amount=-front_offset-D1)], ruled=True)
     
@@ -248,7 +248,7 @@ def add_button(loc, flip_pcb):
 
     pusher_width = 5
     pusher_depth = 5
-    tension = 0 # Move keyswitch in for tension (not used atm)
+    tension = -0.25
     pusher_pos = Pos(button_sketch.center()) * Pos(0,0,-pusher_depth)
     top += pusher_pos * Pos(0,0,-front_offset) * Box(pusher_width,pusher_width,pusher_depth-front_offset, align=align('cc-'))
     keyswitch_pcbs.append(mk_g304_keyswitch_pcb(loc * pusher_pos * Pos(0,0,tension) * Rotation(0,0,135), flip_pcb))
