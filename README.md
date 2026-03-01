@@ -20,11 +20,11 @@ In case you're interested in the original version you can find it [here](trackba
 It's based on [jfedor2](https://github.com/jfedor2)'s excellent set of projects.
 In particular it's using 2 [PMW3360 breakout PCBs](https://github.com/jfedor2/pmw3360-breakout) and 4 [mouse buttons switch mount PCBs](https://github.com/jfedor2/mouse-switch-mount-pcb). It's also using a firmware derived from his [twist-to-scroll trackball](https://github.com/jfedor2/twist-to-scroll-trackball) project.
 
+![Mk.II blueprint](img/mkii_blueprint_xray.png)
+
 However there's a number of pretty major changes:
 
 Instead of a [RP2040+PMW3360](https://github.com/jfedor2/rp2040-pmw3360) board I'm using a regular Raspberry Pi Pico.
-
-![opened trackball](img/img3.jpeg)
 
 I redesigned the entire enclosure from the ground up in build123d. The nice thing about this is that it should be possible to parameterize the generated model (for instance to use a 55mm trackball instead of a 57.2mm billiards ball or to change the type of bearing used).
 
@@ -35,6 +35,16 @@ This means when reading from the sensors, some axis values (the X and Z axis) ne
 
 This is done in firmware. The basic math isn't too complicated, but it meant that the time delay between reading both sensors should be minimal or else the time lag might show up as unintended twists around the Z axis.
 To improve this I interleaved the sensor access. I also switched from RP2040 HW SPI to PIO SPI which allowed for more flexible GPIO mapping.
+
+## Experience
+
+The Mk.II version is significantly easier to build and the button reach and feel is better.
+Honestly it's an all-around better design.
+
+<video src="img/mkii_in_action.mp4" width="480" height="480" controls></video>
+![The Mk.II trackball in action](img/mkii_in_action.mp4)
+
+![Mk.II blueprint](img/mkii_side.jpeg)
 
 ## Future Ideas
 
