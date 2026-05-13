@@ -216,7 +216,7 @@ def add_button(loc, flip_pcb):
         front_offset = 4 * print_resolution
         front = loc * loft([Pos(0,0,0) * offset(button_sketch, amount=-D1),
                             Pos(0,0,-front_offset) * offset(button_sketch, amount=-front_offset-D1)], ruled=True)
-    
+
     top += loft([Pos(0,0,-front_offset) * offset(button_sketch, amount=-front_offset-D1),
                  Pos(0,0,-wall)       * offset(button_sketch, amount=-wall-D1),
                  Pos(0,0,-wall-extra) * offset(button_sketch, amount=-wall+extra-D1)], ruled=True)
@@ -255,7 +255,7 @@ def add_button(loc, flip_pcb):
 
     top = loc * top.solid()
     #top = ShapeList([loc * s for s in top.solids()])
-    
+
     return front
 
 # Fronts for split buttons (only used when configured)
@@ -283,8 +283,16 @@ elif config.cable_mount_type == CableMountType.RP2040_SUPERMINI:
 
     loc = Pos(bottom_pos) * Pos(0,wall+eta,0)
 
-    bottom += loc * Pos(-board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
-    bottom += loc * Pos( board_width/2, board_length, 0) * Box(3,3,z_offset + board_thickness*2, align=align('cc-'))
+    back_post_profile = make_face(Polyline([(0,-2,0),
+                                  (0, 6,0),
+                                  (0,-eta,6),
+                                  (0,-eta,z_offset+1),
+                                  (0,-2,z_offset+1),
+                                  (0,-2,0),
+                                  ]))
+    bottom += loc * Pos(-board_width/2, board_length, 0) * extrude(back_post_profile, both=True, amount=1.5)
+    bottom += loc * Pos(board_width/2, board_length, 0) * extrude(back_post_profile, both=True, amount=1.5)
+
     bottom += loc * Pos(-7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('+--'))
     bottom += loc * Pos( 7/2, 0, 0) * Box(2,3,z_offset-eta, align=align('---'))
 
