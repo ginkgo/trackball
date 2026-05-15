@@ -48,7 +48,13 @@ extern "C" {
 // These IDs are bogus. If you want to distribute any hardware using this,
 // you will have to get real ones.
 #define USB_VID 0xCAFE
+#if POINTING_DEVICE
 #define USB_PID 0xBADA
+#elif SPACEMOUSE
+#define USB_PID 0xBA3D
+#else
+#error unknown device type
+#endif
 
 #define CONFIG_VERSION 1
 #define CONFIG_SIZE 26
@@ -127,6 +133,7 @@ tusb_desc_device_t const desc_device = {
 	.bNumConfigurations = 0x01,
 };
 
+#if POINTING_DEVICE
 uint8_t const desc_hid_report[] = {
 	0x05, 0x01,			// Usage Page (Generic Desktop Ctrls)
 	0x09, 0x02,			// Usage (Mouse)
@@ -202,6 +209,34 @@ uint8_t const desc_hid_report[] = {
 	0xB1, 0x02,			//	 Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
 	0xC0,				// End Collection
 };
+#elif SPACEMOUSE
+uint8_t const desc_hid_report[] = {
+	0x05, 0x01,         // Usage Page (Generic Desktop)
+	0x09, 0x08,         // Usage (Multi-Axis Controller)
+	0xA1, 0x01,         // Collection (Application)
+	0x85, 0x01,         //  Report ID (1)
+	0x05, 0x09,         //  Usage Page (Button)
+	0x19, 0x01,         //  Usage Minimum (0x01)
+	0x29, 0x08,         //  Usage Maximum (0x08)
+	0x95, 0x08,         //  Report Count (8)
+	0x75, 0x01,         //  Report Size (1)
+	0x25, 0x01,         //  Logical Maximum (1)
+	0x81, 0x02,         //  Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+	0x05, 0x01,         //  Usage Page (Generic Desktop)
+	0x09, 0x30,         //  Usage (X)
+	0x09, 0x31,         //  Usage (Y)
+	0x09, 0x32,         //  Usage (Z)
+	0x09, 0x33,         //  Usage (Rx)
+	0x09, 0x34,         //  Usage (Ry)
+	0x09, 0x35,         //  Usage (Rz)
+	0x75, 0x10,         //  Report Size (16)
+	0x95, 0x06,         //  Report Count (6)
+	0x16, 0x00, 0x80,   //  Logical Minimum (-32768)
+	0x26, 0xFF, 0x7F,   //  Logical Maximum (32767)
+	0x81, 0x06,         //  Input (Data,Var,Rel,No Wrap,Linear,Preferred State,No Null Position)
+	0xC0,               // End Collection
+};
+#endif
 
 #define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
 #define EPNUM_HID 0x81
@@ -216,10 +251,15 @@ uint8_t const desc_configuration[] = {
 
 char const* string_desc_arr[] = {
 	(const char[]){ 0x09, 0x04 },  // 0: is supported language is English (0x0409)
-	"RP2040+PMW3360",			   // 1: Manufacturer
-	"Trackball",				   // 2: Product
+	"ginkgo",       			   // 1: Manufacturer
+#if POINTING_DEVICE
+	"trackball",				   // 2: Product
+#elif SPACEMOUSE
+	"spacemouse",				   // 2: Product
+#endif
 };
 
+#if POINTING_DEVICE
 struct __attribute__((packed)) hid_report_t {
 	uint8_t buttons;
 	int16_t dx;
@@ -345,56 +385,22 @@ int16_t handle_scroll(int sensor, int axis, int16_t movement, uint8_t multiplier
 	return ret;
 }
 
-/*
- * This function tries to decide whether we're scrolling or moving the cursor.
- * It then commits to one or the other until the ball stops moving.
- * If it decides that we're moving the cursor then it zeroes any scroll input.
- * It doesn't currently cancel cursor movement when it decides that we're
- * scrolling.
- * The sensor axes functions are configurable, but below logic probably only
- * makes sense if the default mapping is used. It might also slightly interfere
- * with a configuration where you have the ball set to scroll when "shift"
- * button is held, so keep that in mind.
- * False positives still happen occasionally, you can try to tweak the
- * thresholds to improve the situation.
- * In theory it is CPI agnostic, but I haven't done a lot of testing with
- * different CPI values.
- * Oh, and the running averages are sensitive to how many samples per second
- * we're getting from the sensors, at the time it was being written it was
- * around 500.
- */
-void handle_twist_to_scroll() {
-	if (fabs(running_avg_x) < 0.1 / 12 && fabs(running_avg_y) < 0.1 / 12) {
-		not_scroll_mode = false;
-	}
+#elif SPACEMOUSE
+struct __attribute__((packed)) hid_report_t {
+	uint8_t buttons;
+	int16_t x;
+	int16_t y;
+	int16_t z;
+	int16_t rx;
+	int16_t ry;
+	int16_t rz;
+};
 
-	/* if (fabs(running_avg_vscroll) < 0.1 / 16) { */
-	/* 	scroll_mode = false; */
-	/* } */
+hid_report_t report;
+#endif /* POINTING_DEVICE */
 
-	/* if (!scroll_mode && (running_avg_x * running_avg_x + running_avg_y * running_avg_y > 4.0 / (12 * 12))) { */
-	/* 	not_scroll_mode = true; */
-	/* } */
-
-	if (!not_scroll_mode && running_avg_vscroll * running_avg_vscroll > 4.0 / (16 * 16)) {
-		scroll_mode = true;
-	}
-
-	if (!scroll_mode || not_scroll_mode) {
-		report.vwheel = 0;
-		for (int sensor = 0; sensor < NSENSORS; sensor++) {
-			for (int axis = 0; axis < 2; axis++) {
-				// ignoring the shifted function for now...
-				if (config.sensor_function[sensor][axis] == SensorFunction::VERTICAL_SCROLL ||
-					config.sensor_function[sensor][axis] == SensorFunction::VERTICAL_SCROLL_INVERTED) {
-					accumulated_scroll[sensor][axis] = 0;
-				}
-			}
-		}
-	}
-}
-
-bool hid_task() {
+#if POINTING_DEVICE
+bool hid_pointing_task() {
 	if (!tud_hid_ready()) {
 		return false;
 	}
@@ -470,7 +476,7 @@ bool hid_task() {
 	// 45 degree angle -> 1/sqrt(2) factor
 	double movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
 	double movement_y = ((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
-	double movement_z =			sensors.movement[0][1] - sensors.movement[1][1];
+	double movement_z = ((sensors.movement[0][1] - sensors.movement[1][1]) * 0.7071067811865475);
 #elif TRACKBALL_MK_II
 	// 60 degree angle -> 2*1/2 factor (inverted)
 	double movement_x =  -(sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
@@ -510,54 +516,69 @@ bool hid_task() {
 	residual_y = movement_y - round(movement_y);
 	residual_z = movement_z - round(movement_z);
 
-	/* { */
-	/*	   for (int axis = 0; axis < 2; axis++) { */
-	/*		   int16_t movement = sensors[sensor].movement[axis]; */
-	/*		   SensorFunction sensor_function = */
-	/*			   shifted ? config.sensor_shifted_function[sensor][axis] : config.sensor_function[sensor][axis]; */
-	/*		   if (static_cast<int>(sensor_function) < 0) { */
-	/*			   movement *= -1; */
-	/*		   } */
-	/*		   switch (sensor_function) { */
-	/*			   case SensorFunction::NO_FUNCTION: */
-	/*				   break; */
-	/*			   case SensorFunction::CURSOR_X: */
-	/*			   case SensorFunction::CURSOR_X_INVERTED: */
-	/*				   report.dx += movement; */
-	/*				   running_avg_x += 0.1 * movement / current_cpi[sensor]; */
-	/*				   break; */
-	/*			   case SensorFunction::CURSOR_Y: */
-	/*			   case SensorFunction::CURSOR_Y_INVERTED: */
-	/*				   report.dy += movement; */
-	/*				   running_avg_y += 0.1 * movement / current_cpi[sensor]; */
-	/*				   break; */
-	/*			   case SensorFunction::VERTICAL_SCROLL: */
-	/*			   case SensorFunction::VERTICAL_SCROLL_INVERTED: */
-	/*				   report.vwheel += handle_scroll(sensor, axis, movement, 1 << 0, &running_avg_vscroll); */
-	/*				   break; */
-	/*			   case SensorFunction::HORIZONTAL_SCROLL: */
-	/*			   case SensorFunction::HORIZONTAL_SCROLL_INVERTED: */
-	/*				   report.hwheel += handle_scroll(sensor, axis, movement, 1 << 2, &running_avg_hscroll); */
-	/*				   break; */
-	/*		   } */
-	/*	   } */
-	/* } */
+	tud_hid_report(1, &report, sizeof(report));
 
-	// uncomment to have pressing all buttons reset into BOOTSEL
-	// (convenient during development)
-	// if (!(pin_state & (1 << button_pins[0]) ||
-	//		 pin_state & (1 << button_pins[1]) ||
-	//		 pin_state & (1 << button_pins[2]) ||
-	//		 pin_state & (1 << button_pins[3]))) {
-	//	   reset_usb_boot(0, 0);
-	// }
+	return true;
+}
+#endif /* POINTING_DEVICE */
 
-	handle_twist_to_scroll();
+#if SPACEMOUSE
+bool hid_spacemouse_task() {
+	if (!tud_hid_ready()) {
+		return false;
+	}
+
+	memset(&report, 0, sizeof(report));
+	static bool cpi_set = false;
+	if (!cpi_set) {
+		sensors.set_cpi(12000);
+		cpi_set = true;
+	}
+
+	sensors.update();
+
+#if TRACKBALL_MK_I
+	// 45 degree angle -> 1/sqrt(2) factor
+	double movement_x = 		   (sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
+	double movement_y = ((sensors.movement[0][1] + sensors.movement[1][1]) * 0.7071067811865475);
+	double movement_z = ((sensors.movement[0][1] - sensors.movement[1][1]) * 0.7071067811865475);
+#elif TRACKBALL_MK_II
+	// 60 degree angle -> 2*1/2 factor (inverted)
+	double movement_x =  -(sensors.movement[0][0] + sensors.movement[1][0]) / 2.0;
+	double movement_y =  -(sensors.movement[0][1] + sensors.movement[1][1]);
+	double movement_z =	 -(sensors.movement[0][1] - sensors.movement[1][1]);
+#else
+#error Unknown Trackball
+#endif
+
+	movement_x *= 6.0;
+	movement_y *= 6.0;
+	movement_z *= 6.0;
+
+	static double residual_x = 0;
+	static double residual_y = 0;
+	static double residual_z = 0;
+
+	movement_x += residual_x * 0.9;
+	movement_y += residual_y * 0.9;
+	movement_z += residual_z * 0.9;
+
+	report.x = 0;
+	report.y = 0;
+	report.z = 0;
+	report.rx = (int16_t)round(movement_y);
+	report.ry = (int16_t)round(movement_z);
+	report.rz = (int16_t)round(movement_x)*-1;
+
+	residual_x = movement_x - round(movement_x);
+	residual_y = movement_y - round(movement_y);
+	residual_z = movement_z - round(movement_z);
 
 	tud_hid_report(1, &report, sizeof(report));
 
 	return true;
 }
+#endif
 
 void pin_init(uint pin) {
 	gpio_init(pin);
@@ -585,6 +606,7 @@ void sensors_init() {
 	sensors.init();
 }
 
+#if POINTING_DEVICE
 void run_config_command() {
 	// we probably shouldn't do this for config read from flash
 	// or let's just not write any non-null command to flash
@@ -616,6 +638,7 @@ void persist_config() {
 	flash_range_program(CONFIG_OFFSET_IN_FLASH, buffer, FLASH_PAGE_SIZE);
 	restore_interrupts(ints);
 }
+#endif /* POINTING_DEVICE */
 
 int main() {
 	// Use GPIO 16&17 for serial
@@ -624,7 +647,9 @@ int main() {
 
 	stdio_init_all();
 	board_init();
+#if POINTING_DEVICE
 	load_config();
+#endif /* POINTING_DEVICE */
 	pins_init();
 	sensors_init();
 
@@ -634,7 +659,11 @@ int main() {
 	uint64_t start = to_us_since_boot(get_absolute_time());
 	while (true) {
 		tud_task();	 // tinyusb device task
-		bool did_sensor_reading = hid_task();
+#if POINTING_DEVICE
+		bool did_sensor_reading = hid_pointing_task();
+#elif SPACEMOUSE
+		bool did_sensor_reading = hid_spacemouse_task();
+#endif
 
 		if (did_sensor_reading) {
 			count++;
@@ -677,6 +706,7 @@ uint8_t const* tud_hid_descriptor_report_cb(uint8_t itf) {
 // Application must fill buffer report's content and return its length.
 // Return zero will cause the stack to STALL request
 uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen) {
+#if POINTING_DEVICE
 	if (report_id == 2 && reqlen >= 1) {
 		memcpy(buffer, &resolution_multiplier, 1);
 		return 1;
@@ -686,6 +716,7 @@ uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t
 		memcpy(buffer, &config, CONFIG_SIZE);
 		return CONFIG_SIZE;
 	}
+#endif /* POINTING_DEVICE */
 
 	return 0;
 }
@@ -693,6 +724,7 @@ uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
 void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize) {
+#if POINTING_DEVICE
 	if (report_id == 2 && bufsize >= 1) {
 		memcpy(&resolution_multiplier, buffer, 1);
 	}
@@ -703,6 +735,7 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
 			persist_config();
 		}
 	}
+#endif /* POINTING_DEVICE */
 }
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
