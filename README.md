@@ -1,6 +1,8 @@
 # Trackball
 
 ## News
+
+- 2026-05-15: Added experimental firmware support for using the trackball as a 3D space mouse. Also some minor tweaks and improvement to the trackball model.
 - 2025-12-25: I'm releasing a new version (Mk.II) that should be easier to print and build.
 
 ## Introduction
