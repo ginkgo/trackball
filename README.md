@@ -2,7 +2,7 @@
 
 ## News
 
-- 2026-05-15: Added experimental firmware support for using the trackball as a 3D space mouse. Also some minor tweaks and improvement to the trackball model.
+- 2026-05-15: Added experimental firmware support for using the trackball as a 3D space mouse. [More info here.](ndof.md)
 - 2025-12-25: I'm releasing a new version (Mk.II) that should be easier to print and build.
 
 ## Introduction
@@ -69,7 +69,7 @@ If you have suggestions for improvements feel free to open an issue or create a 
 
 ## License
 
-The 3d-printable parts as well as the python code to generate thes is copyright 2024 Thomas Weber and licensed under terms the MIT license.
+The 3d-printable parts as well as the python code to generate them is copyright 2024-2026 Thomas Weber and licensed under terms the MIT license.
 
-The firmware is copyright 2024 Thomas Weber, copyright 2021 Jacek Fedoryński (jfedor2), and copyright 2019 Ha Thach (tinyusb.org) and licensed under the terms of the MIT license.
+The firmware is copyright 2024-2026 Thomas Weber, copyright 2021 Jacek Fedoryński (jfedor2), and copyright 2019 Ha Thach (tinyusb.org) and licensed under the terms of the MIT license.
 There is also a piece of code for the SPI PIO copyright 2020 of the Raspberry Pi that's licensed under the terms of the BSD-3-Clause license.
